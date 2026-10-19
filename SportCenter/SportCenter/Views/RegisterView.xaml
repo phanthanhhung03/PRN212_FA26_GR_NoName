@@ -1,0 +1,137 @@
+<UserControl x:Class="SportCenter.Views.RegisterView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:views="clr-namespace:SportCenter.Views">
+    <Grid Background="{StaticResource BackgroundBrush}">
+
+        <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="0,56,0,24">
+            <Border Style="{StaticResource CardStyle}" Width="560" Padding="32"
+                    HorizontalAlignment="Center" VerticalAlignment="Center">
+                <StackPanel>
+
+                    <views:LogoControl Width="52" Height="52" HorizontalAlignment="Center"/>
+                    <TextBlock Text="Đăng ký Học viên" FontSize="24" FontWeight="Bold"
+                               Foreground="{StaticResource PrimaryDarkBrush}"
+                               HorizontalAlignment="Center" Margin="0,10,0,4"/>
+                    <TextBlock Text="Tạo tài khoản để đăng ký lớp học" FontSize="13"
+                               Foreground="{StaticResource MutedTextBrush}"
+                               HorizontalAlignment="Center" Margin="0,0,0,18"/>
+
+                    <Border x:Name="SuccessBanner" Visibility="Collapsed" Background="{StaticResource PrimaryLightBrush}"
+                            CornerRadius="8" Padding="12,8" Margin="0,0,0,14">
+                        <TextBlock Text="Đăng ký thành công (demo). Đang chuyển về đăng nhập..."
+                                   Foreground="{StaticResource PrimaryDarkBrush}" FontSize="13"/>
+                    </Border>
+
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="16"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <!-- Họ tên -->
+                        <StackPanel Grid.Row="0" Grid.Column="0" Margin="0,0,0,14">
+                            <TextBlock Text="Họ và tên" FontSize="13" FontWeight="SemiBold" Margin="0,0,0,6"/>
+                            <TextBox x:Name="FullNameBox" Style="{StaticResource InputTextBox}"
+                                     VerticalContentAlignment="Center" LostFocus="FullName_LostFocus"/>
+                            <TextBlock x:Name="FullNameError" Style="{StaticResource FieldError}"/>
+                        </StackPanel>
+
+                        <!-- SĐT -->
+                        <StackPanel Grid.Row="0" Grid.Column="2" Margin="0,0,0,14">
+                            <TextBlock Text="Số điện thoại" FontSize="13" FontWeight="SemiBold" Margin="0,0,0,6"/>
+                            <TextBox x:Name="PhoneBox" Style="{StaticResource InputTextBox}"
+                                     VerticalContentAlignment="Center" LostFocus="Phone_LostFocus"/>
+                            <TextBlock x:Name="PhoneError" Style="{StaticResource FieldError}"/>
+                        </StackPanel>
+
+                        <!-- Ngày sinh -->
+                        <StackPanel Grid.Row="1" Grid.Column="0" Margin="0,0,0,14">
+                            <TextBlock Text="Ngày sinh" FontSize="13" FontWeight="SemiBold" Margin="0,0,0,6"/>
+                            <DatePicker x:Name="BirthDatePicker" Height="42" FontSize="14"
+                                        VerticalContentAlignment="Center"
+                                        SelectedDateChanged="BirthDate_Changed"/>
+                            <TextBlock x:Name="BirthDateError" Style="{StaticResource FieldError}"/>
+                        </StackPanel>
+
+                        <!-- Giới tính -->
+                        <StackPanel Grid.Row="1" Grid.Column="2" Margin="0,0,0,14">
+                            <TextBlock Text="Giới tính" FontSize="13" FontWeight="SemiBold" Margin="0,0,0,6"/>
+                            <StackPanel Orientation="Horizontal" Height="42">
+                                <RadioButton x:Name="MaleRadio" Content="Nam" GroupName="Gender" FontSize="14"
+                                             VerticalAlignment="Center" Margin="0,0,20,0" Checked="Gender_Checked"/>
+                                <RadioButton x:Name="FemaleRadio" Content="Nữ" GroupName="Gender" FontSize="14"
+                                             VerticalAlignment="Center" Margin="0,0,20,0" Checked="Gender_Checked"/>
+                                <RadioButton x:Name="OtherRadio" Content="Khác" GroupName="Gender" FontSize="14"
+                                             VerticalAlignment="Center" Checked="Gender_Checked"/>
+                            </StackPanel>
+                            <TextBlock x:Name="GenderError" Style="{StaticResource FieldError}"/>
+                        </StackPanel>
+
+                        <!-- Email -->
+                        <StackPanel Grid.Row="2" Grid.Column="0" Margin="0,0,0,14">
+                            <TextBlock Text="Email" FontSize="13" FontWeight="SemiBold" Margin="0,0,0,6"/>
+                            <TextBox x:Name="EmailBox" Style="{StaticResource InputTextBox}"
+                                     VerticalContentAlignment="Center" LostFocus="Email_LostFocus"/>
+                            <TextBlock x:Name="EmailError" Style="{StaticResource FieldError}"/>
+                        </StackPanel>
+
+                        <!-- Username -->
+                        <StackPanel Grid.Row="2" Grid.Column="2" Margin="0,0,0,14">
+                            <TextBlock Text="Tên đăng nhập" FontSize="13" FontWeight="SemiBold" Margin="0,0,0,6"/>
+                            <TextBox x:Name="UsernameBox" Style="{StaticResource InputTextBox}"
+                                     VerticalContentAlignment="Center" LostFocus="Username_LostFocus"/>
+                            <TextBlock x:Name="UsernameError" Style="{StaticResource FieldError}"/>
+                        </StackPanel>
+
+                        <!-- Mật khẩu -->
+                        <StackPanel Grid.Row="3" Grid.Column="0">
+                            <TextBlock Text="Mật khẩu" FontSize="13" FontWeight="SemiBold" Margin="0,0,0,6"/>
+                            <Grid>
+                                <PasswordBox x:Name="PasswordBox" Style="{StaticResource InputPasswordBox}"
+                                             Padding="12,0,56,0" VerticalContentAlignment="Center"
+                                             PasswordChanged="PasswordBox_PasswordChanged" LostFocus="Password_LostFocus"/>
+                                <TextBox x:Name="PasswordVisibleBox" Style="{StaticResource InputTextBox}"
+                                         Padding="12,0,56,0" VerticalContentAlignment="Center" Visibility="Collapsed"
+                                         TextChanged="PasswordVisibleBox_TextChanged" LostFocus="Password_LostFocus"/>
+                                <Button x:Name="TogglePasswordButton" Content="Hiện" Style="{StaticResource LinkButton}"
+                                        HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,14,0"
+                                        Click="TogglePasswordButton_Click"/>
+                            </Grid>
+                            <TextBlock x:Name="PasswordError" Style="{StaticResource FieldError}"/>
+                        </StackPanel>
+
+                        <!-- Nhập lại mật khẩu -->
+                        <StackPanel Grid.Row="3" Grid.Column="2">
+                            <TextBlock Text="Nhập lại mật khẩu" FontSize="13" FontWeight="SemiBold" Margin="0,0,0,6"/>
+                            <PasswordBox x:Name="ConfirmPasswordBox" Style="{StaticResource InputPasswordBox}"
+                                         VerticalContentAlignment="Center" LostFocus="Confirm_LostFocus"/>
+                            <TextBlock x:Name="ConfirmError" Style="{StaticResource FieldError}"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <Button Content="Đăng ký" Style="{StaticResource PrimaryButton}" IsDefault="True"
+                            Margin="0,24,0,0" Click="RegisterButton_Click"/>
+
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,18,0,0">
+                        <TextBlock Text="Đã có tài khoản? " FontSize="13" Foreground="{StaticResource MutedTextBrush}"/>
+                        <Button Content="Đăng nhập" Style="{StaticResource LinkButton}" FontWeight="SemiBold"
+                                Click="BackButton_Click"/>
+                    </StackPanel>
+
+                </StackPanel>
+            </Border>
+        </ScrollViewer>
+
+        <Button Content="←  Quay lại" Style="{StaticResource LinkButton}" FontSize="14"
+                HorizontalAlignment="Left" VerticalAlignment="Top" Margin="24,20,0,0"
+                Click="BackButton_Click"/>
+    </Grid>
+</UserControl>
