@@ -1,24 +1,38 @@
-﻿using System.Text;
+﻿using System;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
+using System.Windows.Media.Animation;
+using SportCenter.Views;
 
-namespace SportCenter
+namespace SportCenter;
+
+public partial class MainWindow : Window
 {
-    /// <summary>
-    /// Interaction logic for MainWindow.xaml
-    /// </summary>
-    public partial class MainWindow : Window
+    public MainWindow()
     {
-        public MainWindow()
-        {
-            InitializeComponent();
-        }
+        InitializeComponent();
+        ShowRoleSelect();
+    }
+
+    private void ShowRoleSelect()
+    {
+        var view = new RoleSelectView();
+        view.StaffSelected += (_, _) => ShowLogin(isMember: false);
+        view.MemberSelected += (_, _) => ShowLogin(isMember: true);
+        Navigate(view);
+    }
+
+    private void ShowLogin(bool isMember)
+    {
+        var view = new LoginFormView(isMember);
+        view.BackRequested += (_, _) => ShowRoleSelect();
+        Navigate(view);
+    }
+
+    private void Navigate(UserControl view)
+    {
+        view.Opacity = 0;
+        MainContent.Content = view;
+        view.BeginAnimation(OpacityProperty, new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(250)));
     }
 }
