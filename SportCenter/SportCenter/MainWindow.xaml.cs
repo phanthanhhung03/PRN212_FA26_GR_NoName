@@ -26,6 +26,14 @@ public partial class MainWindow : Window
     {
         var view = new LoginFormView(isMember);
         view.BackRequested += (_, _) => ShowRoleSelect();
+        view.RegisterRequested += (_, _) => ShowRegister();
+        Navigate(view);
+    }
+
+    private void ShowRegister()
+    {
+        var view = new RegisterView();
+        view.BackRequested += (_, _) => ShowLogin(isMember: true);
         Navigate(view);
     }
 

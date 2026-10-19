@@ -24,6 +24,15 @@
         <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
     </Style>
 
+    <!-- Inline field error -->
+    <Style x:Key="FieldError" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="Foreground" Value="{StaticResource ErrorBrush}"/>
+        <Setter Property="Margin" Value="2,4,0,0"/>
+        <Setter Property="TextWrapping" Value="Wrap"/>
+        <Setter Property="Visibility" Value="Collapsed"/>
+    </Style>
+
     <!-- Card -->
     <Style x:Key="CardStyle" TargetType="Border">
         <Setter Property="Background" Value="{StaticResource SurfaceBrush}"/>

@@ -9,6 +9,7 @@ public partial class LoginFormView : UserControl
     private bool _syncingPassword;
 
     public event EventHandler? BackRequested;
+    public event EventHandler? RegisterRequested;
 
     public LoginFormView(bool isMember)
     {
@@ -48,10 +49,7 @@ public partial class LoginFormView : UserControl
         // Chưa có màn Quên mật khẩu (UC17).
     }
 
-    private void Register_Click(object sender, RoutedEventArgs e)
-    {
-        // Chưa có màn Đăng ký (UC16).
-    }
+    private void Register_Click(object sender, RoutedEventArgs e) => RegisterRequested?.Invoke(this, EventArgs.Empty);
 
     private void Input_Changed(object sender, TextChangedEventArgs e) => HideError();
 
