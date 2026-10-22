@@ -2,3 +2,5 @@
 :r 001_schema.sql
 
 :r 002_functions.sql
+
+:r 003_account_procedures.sql
