@@ -2,3 +2,4 @@
 :r tests/t02_functions.sql
 :r tests/t03_accounts.sql
 :r tests/t04_create_class.sql
+:r tests/t05_session.sql
