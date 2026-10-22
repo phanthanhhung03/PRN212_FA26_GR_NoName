@@ -4,3 +4,5 @@
 :r 002_functions.sql
 
 :r 003_account_procedures.sql
+
+:r 004_class_procedures.sql

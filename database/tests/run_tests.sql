@@ -1,3 +1,4 @@
 :r tests/t01_schema.sql
 :r tests/t02_functions.sql
 :r tests/t03_accounts.sql
+:r tests/t04_create_class.sql
