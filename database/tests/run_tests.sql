@@ -3,3 +3,4 @@
 :r tests/t03_accounts.sql
 :r tests/t04_create_class.sql
 :r tests/t05_session.sql
+:r tests/t06_security.sql
