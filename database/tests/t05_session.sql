@@ -336,5 +336,41 @@ IF ISNULL(@n, 0) <> 1 THROW 60000, N'FAIL: self-reassign must succeed and leave 
 ROLLBACK;
 GO
 
+-- ===== Batch 20: class room Inactive -> no automatic makeup, cancel still stands =====
+BEGIN TRAN;
+:r tests/_fixture.sql
+DECLARE @slots dbo.IdList, @classA INT, @sA2 INT, @makeup INT, @n INT, @st VARCHAR(20);
+INSERT INTO @slots (id) VALUES (@slotMon), (@slotWed);
+EXEC dbo.sp_create_class @mgr, @course, N't5 A', '2026-11-02', 8, @coachA, @roomS, @slots, @classA OUTPUT;
+SELECT @sA2 = session_id FROM session WHERE class_id = @classA AND session_no = 2;
+UPDATE room SET status = 'Inactive' WHERE room_id = @roomS;
+SET @makeup = -1;
+EXEC dbo.sp_cancel_session @mgr, @sA2, @makeup OUTPUT;
+IF @makeup IS NOT NULL THROW 60000, N'FAIL: inactive class room must give no automatic makeup', 1;
+SELECT @st = status FROM session WHERE session_id = @sA2;
+IF ISNULL(@st, '') <> 'Cancelled' THROW 60000, N'FAIL: session 2 must be Cancelled', 1;
+SELECT @n = COUNT(*) FROM session WHERE class_id = @classA;
+IF ISNULL(@n, 0) <> 4 THROW 60000, N'FAIL: no makeup row may be created for inactive room', 1;
+ROLLBACK;
+GO
+
+-- ===== Batch 21: class coach Inactive -> no automatic makeup, cancel still stands =====
+BEGIN TRAN;
+:r tests/_fixture.sql
+DECLARE @slots dbo.IdList, @classA INT, @sA2 INT, @makeup INT, @n INT, @st VARCHAR(20);
+INSERT INTO @slots (id) VALUES (@slotMon), (@slotWed);
+EXEC dbo.sp_create_class @mgr, @course, N't5 A', '2026-11-02', 8, @coachA, @roomS, @slots, @classA OUTPUT;
+SELECT @sA2 = session_id FROM session WHERE class_id = @classA AND session_no = 2;
+UPDATE [user] SET status = 'Inactive' WHERE user_id = @coachA;
+SET @makeup = -1;
+EXEC dbo.sp_cancel_session @mgr, @sA2, @makeup OUTPUT;
+IF @makeup IS NOT NULL THROW 60000, N'FAIL: inactive class coach must give no automatic makeup', 1;
+SELECT @st = status FROM session WHERE session_id = @sA2;
+IF ISNULL(@st, '') <> 'Cancelled' THROW 60000, N'FAIL: session 2 must be Cancelled (coach case)', 1;
+SELECT @n = COUNT(*) FROM session WHERE class_id = @classA;
+IF ISNULL(@n, 0) <> 4 THROW 60000, N'FAIL: no makeup row may be created for inactive coach', 1;
+ROLLBACK;
+GO
+
 PRINT 'PASS t05 session';
 GO

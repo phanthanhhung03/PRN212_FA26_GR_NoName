@@ -130,16 +130,32 @@ BEGIN
 
     UPDATE session SET status = 'Cancelled' WHERE session_id = @session_id;
 
-    DECLARE @coach_id INT, @room_id INT, @total INT, @valid INT, @last_date DATE;
-    SELECT @coach_id = c.coach_id, @room_id = c.room_id, @total = co.total_sessions
+    DECLARE @coach_id INT, @room_id INT, @total INT, @valid INT, @last_date DATE,
+            @sport_id INT, @max_capacity INT, @usable BIT = 0;
+    SELECT @coach_id = c.coach_id, @room_id = c.room_id, @total = co.total_sessions,
+           @sport_id = co.sport_id, @max_capacity = c.max_capacity
     FROM class c
     JOIN course co ON co.course_id = c.course_id
     WHERE c.class_id = @class_id;
 
+    -- Same validity rules as usp_check_assignment, evaluated without THROW so the
+    -- cancel stands: an invalid class coach/room just means no automatic makeup.
+    IF EXISTS (
+        SELECT 1
+        FROM [user] u
+        JOIN [role] r ON r.role_id = u.role_id
+        WHERE u.user_id = @coach_id AND r.role_name = N'Coach'
+          AND u.status = 'Active' AND u.sport_id = @sport_id)
+       AND EXISTS (
+        SELECT 1 FROM room
+        WHERE room_id = @room_id AND status = 'Active'
+          AND sport_id = @sport_id AND capacity >= @max_capacity)
+        SET @usable = 1;
+
     SELECT @valid = COUNT(*) FROM session WHERE class_id = @class_id AND status <> 'Cancelled';
     SELECT @last_date = MAX(session_date) FROM session WHERE class_id = @class_id;
 
-    IF @coach_id IS NOT NULL AND @valid < @total
+    IF @usable = 1 AND @valid < @total
     BEGIN
         DECLARE @mk_date DATE, @mk_slot INT;
         SELECT TOP (1) @mk_date = d.dt, @mk_slot = ts.time_slot_id
