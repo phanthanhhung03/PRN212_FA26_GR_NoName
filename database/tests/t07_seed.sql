@@ -123,5 +123,16 @@ IF EXISTS (SELECT 1 FROM class c
                                AND ts.day_of_week = (DATEDIFF(DAY, '19000101', c.start_date) % 7) + 2))
     THROW 60000, N'FAIL: start_date not on a slot weekday', 1;
 
+-- No member has two non-Dropped enrollments with non-Cancelled sessions on the same date + slot
+IF EXISTS (
+    SELECT 1
+    FROM class_members cm1
+    JOIN class_members cm2 ON cm2.member_id = cm1.member_id AND cm2.class_id > cm1.class_id
+    JOIN session s1 ON s1.class_id = cm1.class_id AND s1.status <> 'Cancelled'
+    JOIN session s2 ON s2.class_id = cm2.class_id AND s2.status <> 'Cancelled'
+                   AND s2.session_date = s1.session_date AND s2.time_slot_id = s1.time_slot_id
+    WHERE cm1.status <> 'Dropped' AND cm2.status <> 'Dropped')
+    THROW 60000, N'FAIL: a member has overlapping sessions across enrollments', 1;
+
 PRINT 'PASS t07 seed';
 GO

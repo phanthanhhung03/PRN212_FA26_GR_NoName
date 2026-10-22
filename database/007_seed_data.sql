@@ -156,7 +156,7 @@ FROM (VALUES
     (N'BL-Beginner-K01',     'member5@sportcenter.local', NULL,                       'Active'),
     (N'BL-Intermediate-K01', 'member3@sportcenter.local', NULL,                       'Active'),
     (N'BL-Intermediate-K01', 'member4@sportcenter.local', NULL,                       'Dropped'),
-    (N'BC-Beginner-K01',     'member2@sportcenter.local', 'staff2@sportcenter.local', 'Active')
+    (N'BC-Beginner-K01',     'member5@sportcenter.local', 'staff2@sportcenter.local', 'Active')  -- member5 is free Wed 18:00
 ) AS v(class_name, member_email, registrar_email, status)
 JOIN class c ON c.class_name = v.class_name
 JOIN [user] u ON u.email = v.member_email
