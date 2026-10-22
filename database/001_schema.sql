@@ -1,43 +1,16 @@
-CREATE DATABASE SportCenterDB;
-GO
 USE SportCenterDB;
 GO
 
--- =====================================================
 -- 1. ROLE
--- =====================================================
 CREATE TABLE [role] (
     role_id   INT PRIMARY KEY IDENTITY(1,1),
     role_name NVARCHAR(50) NOT NULL UNIQUE          -- 'Manager', 'Staff', 'Coach', 'Member'
 );
 GO
-
-INSERT INTO [role] (role_name)
-VALUES (N'Manager'), (N'Staff'), (N'Coach'), (N'Member');
+INSERT INTO [role] (role_name) VALUES (N'Manager'), (N'Staff'), (N'Coach'), (N'Member');
 GO
 
--- =====================================================
--- 2. USER
--- =====================================================
-CREATE TABLE [user] (
-    user_id       INT PRIMARY KEY IDENTITY(1,1),
-    role_id       INT NOT NULL,
-    full_name     NVARCHAR(100) NOT NULL,
-    email         VARCHAR(100) NOT NULL UNIQUE,
-    password_hash VARCHAR(255) NOT NULL,
-    phone         VARCHAR(20),
-    status        VARCHAR(20) NOT NULL DEFAULT 'Active'
-                  CHECK (status IN ('Active', 'Inactive', 'Banned')),
-    created_by    INT NULL,                         -- NULL nếu Member tự đăng ký
-    created_at    DATETIME NOT NULL DEFAULT GETDATE(),
-    CONSTRAINT FK_User_Role      FOREIGN KEY (role_id)    REFERENCES [role](role_id),
-    CONSTRAINT FK_User_CreatedBy FOREIGN KEY (created_by) REFERENCES [user](user_id)
-);
-GO
-
--- =====================================================
--- 3. SPORT
--- =====================================================
+-- 2. SPORT
 CREATE TABLE sport (
     sport_id    INT PRIMARY KEY IDENTITY(1,1),
     sport_name  NVARCHAR(100) NOT NULL,
@@ -47,14 +20,34 @@ CREATE TABLE sport (
 );
 GO
 
--- =====================================================
+-- 3. USER (sport_id: chi Coach, duoc ep trong procedure)
+CREATE TABLE [user] (
+    user_id       INT PRIMARY KEY IDENTITY(1,1),
+    role_id       INT NOT NULL,
+    full_name     NVARCHAR(100) NOT NULL,
+    email         VARCHAR(100) NOT NULL UNIQUE,
+    password_hash VARCHAR(255) NOT NULL,
+    phone         VARCHAR(20),
+    birth_date    DATE NULL,
+    gender        VARCHAR(10) NULL
+                  CHECK (gender IN ('Male', 'Female', 'Other')),
+    sport_id      INT NULL,
+    status        VARCHAR(20) NOT NULL DEFAULT 'Active'
+                  CHECK (status IN ('Active', 'Inactive', 'Banned')),
+    created_by    INT NULL,                         -- NULL neu Member tu dang ky
+    created_at    DATETIME NOT NULL DEFAULT GETDATE(),
+    CONSTRAINT FK_User_Role      FOREIGN KEY (role_id)    REFERENCES [role](role_id),
+    CONSTRAINT FK_User_Sport     FOREIGN KEY (sport_id)   REFERENCES sport(sport_id),
+    CONSTRAINT FK_User_CreatedBy FOREIGN KEY (created_by) REFERENCES [user](user_id)
+);
+GO
+
 -- 4. COURSE
--- =====================================================
 CREATE TABLE course (
     course_id      INT PRIMARY KEY IDENTITY(1,1),
     sport_id       INT NOT NULL,
     course_name    NVARCHAR(150) NOT NULL,
-    level          NVARCHAR(50),                    -- 'Beginner', 'Intermediate', 'Advanced'
+    level          NVARCHAR(50),
     total_sessions INT NOT NULL CHECK (total_sessions > 0),
     tuition_fee    DECIMAL(18,2) NOT NULL CHECK (tuition_fee >= 0),
     description    NVARCHAR(MAX),
@@ -64,36 +57,47 @@ CREATE TABLE course (
 );
 GO
 
--- =====================================================
--- 5. CLASS (quan hệ 'teach': coach_id)
--- =====================================================
+-- 5. ROOM (moi phong thuoc dung mot mon)
+CREATE TABLE room (
+    room_id   INT PRIMARY KEY IDENTITY(1,1),
+    sport_id  INT NOT NULL,
+    room_name NVARCHAR(100) NOT NULL,
+    capacity  INT NOT NULL CHECK (capacity > 0),
+    status    VARCHAR(20) NOT NULL DEFAULT 'Active'
+              CHECK (status IN ('Active', 'Inactive')),
+    CONSTRAINT FK_Room_Sport FOREIGN KEY (sport_id) REFERENCES sport(sport_id),
+    CONSTRAINT UQ_Room_Name  UNIQUE (room_name)
+);
+GO
+
+-- 6. CLASS (coach_id, room_id: coach va phong goc)
 CREATE TABLE class (
     class_id     INT PRIMARY KEY IDENTITY(1,1),
     course_id    INT NOT NULL,
-    coach_id     INT NULL,                          -- 1 Coach dạy nhiều lớp
+    coach_id     INT NULL,
+    room_id      INT NOT NULL,
     class_name   NVARCHAR(100) NOT NULL,
     start_date   DATE NOT NULL,
-    end_date     DATE NULL,
+    end_date     DATE NULL,                         -- he thong tinh
     max_capacity INT NOT NULL DEFAULT 20 CHECK (max_capacity > 0),
     status       VARCHAR(20) NOT NULL DEFAULT 'Enrolling'
                  CHECK (status IN ('Enrolling', 'Ongoing', 'Completed', 'Cancelled')),
     CONSTRAINT FK_Class_Course FOREIGN KEY (course_id) REFERENCES course(course_id),
     CONSTRAINT FK_Class_Coach  FOREIGN KEY (coach_id)  REFERENCES [user](user_id),
+    CONSTRAINT FK_Class_Room   FOREIGN KEY (room_id)   REFERENCES room(room_id),
     CONSTRAINT CK_Class_Dates  CHECK (end_date IS NULL OR end_date >= start_date)
 );
 GO
 
--- =====================================================
--- 6. CLASS_MEMBERS (quan hệ 'join')
--- =====================================================
+-- 7. CLASS_MEMBERS
 CREATE TABLE class_members (
     enrollment_id INT PRIMARY KEY IDENTITY(1,1),
     class_id      INT NOT NULL,
     member_id     INT NOT NULL,
     enrolled_at   DATETIME NOT NULL DEFAULT GETDATE(),
-    registered_by INT NULL,                         -- NULL nếu tự đăng ký, ID Staff nếu đăng ký hộ
+    registered_by INT NULL,
     status        VARCHAR(20) NOT NULL DEFAULT 'Pending'
-                  CHECK (status IN ('Pending', 'Active', 'Dropped')),  -- Pending: chờ thanh toán
+                  CHECK (status IN ('Pending', 'Active', 'Dropped')),
     CONSTRAINT FK_Enrollment_Class     FOREIGN KEY (class_id)      REFERENCES class(class_id),
     CONSTRAINT FK_Enrollment_Member    FOREIGN KEY (member_id)     REFERENCES [user](user_id),
     CONSTRAINT FK_Enrollment_Registrar FOREIGN KEY (registered_by) REFERENCES [user](user_id),
@@ -101,54 +105,91 @@ CREATE TABLE class_members (
 );
 GO
 
--- =====================================================
--- 7. PAYMENT (thanh toán qua payOS)
--- =====================================================
+-- 8. PAYMENT (payOS)
 CREATE TABLE payment (
     payment_id      INT PRIMARY KEY IDENTITY(1,1),
-    enrollment_id   INT NOT NULL,                   -- thanh toán cho lượt ghi danh nào
-    order_code      BIGINT NOT NULL UNIQUE,         -- mã đơn gửi payOS, phải duy nhất
-    amount          DECIMAL(18,2) NOT NULL CHECK (amount >= 0),  -- lấy từ course.tuition_fee
-    description     VARCHAR(25) NOT NULL,           -- payOS giới hạn độ dài mô tả
-    payment_link_id VARCHAR(100) NULL,              -- id yêu cầu thanh toán do payOS trả về
-    qr_code         NVARCHAR(MAX) NULL,             -- chuỗi QR để render
+    enrollment_id   INT NOT NULL,
+    order_code      BIGINT NOT NULL UNIQUE,
+    amount          DECIMAL(18,2) NOT NULL CHECK (amount >= 0),
+    description     VARCHAR(25) NOT NULL,
+    payment_link_id VARCHAR(100) NULL,
+    qr_code         NVARCHAR(MAX) NULL,
     checkout_url    NVARCHAR(500) NULL,
     status          VARCHAR(20) NOT NULL DEFAULT 'Pending'
                     CHECK (status IN ('Pending', 'Paid', 'Cancelled', 'Expired')),
     paid_at         DATETIME NULL,
-    created_by      INT NULL,                       -- Staff tạo hộ, NULL nếu Member tự tạo
+    created_by      INT NULL,
     created_at      DATETIME NOT NULL DEFAULT GETDATE(),
     CONSTRAINT FK_Payment_Enrollment FOREIGN KEY (enrollment_id) REFERENCES class_members(enrollment_id),
     CONSTRAINT FK_Payment_CreatedBy  FOREIGN KEY (created_by)    REFERENCES [user](user_id)
 );
 GO
 
--- =====================================================
--- 8. SCHEDULE
--- =====================================================
-CREATE TABLE schedule (
-    schedule_id   INT PRIMARY KEY IDENTITY(1,1),
-    class_id      INT NOT NULL,
-    session_no    INT NOT NULL CHECK (session_no > 0),
-    session_date  DATE NOT NULL,
-    start_time    TIME NOT NULL,
-    end_time      TIME NOT NULL,
-    room_location NVARCHAR(100),
-    session_note  NVARCHAR(500),
-    status        VARCHAR(20) NOT NULL DEFAULT 'Scheduled'
-                  CHECK (status IN ('Scheduled', 'Completed', 'Cancelled')),
-    CONSTRAINT FK_Schedule_Class FOREIGN KEY (class_id) REFERENCES class(class_id),
-    CONSTRAINT UQ_Class_Session  UNIQUE (class_id, session_no),
-    CONSTRAINT CK_Schedule_Time  CHECK (end_time > start_time)
+-- 9. TIME_SLOT (18 khung co dinh: Thu 2-7 x 3 khung)
+CREATE TABLE time_slot (
+    time_slot_id INT PRIMARY KEY IDENTITY(1,1),
+    slot_name    NVARCHAR(50) NOT NULL,
+    day_of_week  TINYINT NOT NULL,                  -- 2=Thu 2 ... 7=Thu 7
+    start_time   TIME NOT NULL,
+    end_time     TIME NOT NULL,
+    CONSTRAINT CK_TimeSlot_Day   CHECK (day_of_week BETWEEN 2 AND 7),
+    CONSTRAINT CK_TimeSlot_Hours CHECK (
+        (start_time = '07:00' AND end_time = '10:00') OR
+        (start_time = '15:00' AND end_time = '18:00') OR
+        (start_time = '18:00' AND end_time = '21:00')),
+    CONSTRAINT UQ_TimeSlot UNIQUE (day_of_week, start_time, end_time)
 );
 GO
 
--- =====================================================
--- 9. ATTENDANCE
--- =====================================================
+INSERT INTO time_slot (slot_name, day_of_week, start_time, end_time)
+SELECT N'T' + CAST(d.n AS NVARCHAR(1)) + N' ' + LEFT(CONVERT(VARCHAR(8), h.s, 108), 5)
+       + N'-' + LEFT(CONVERT(VARCHAR(8), h.e, 108), 5),
+       d.n, h.s, h.e
+FROM (VALUES (2),(3),(4),(5),(6),(7)) AS d(n)
+CROSS JOIN (VALUES (CAST('07:00' AS TIME), CAST('10:00' AS TIME)),
+                   (CAST('15:00' AS TIME), CAST('18:00' AS TIME)),
+                   (CAST('18:00' AS TIME), CAST('21:00' AS TIME))) AS h(s, e);
+GO
+
+-- 10. CLASS_TIME_SLOT
+CREATE TABLE class_time_slot (
+    class_id     INT NOT NULL,
+    time_slot_id INT NOT NULL,
+    CONSTRAINT PK_Class_TimeSlot PRIMARY KEY (class_id, time_slot_id),
+    CONSTRAINT FK_ClassTS_Class    FOREIGN KEY (class_id)     REFERENCES class(class_id),
+    CONSTRAINT FK_ClassTS_TimeSlot FOREIGN KEY (time_slot_id) REFERENCES time_slot(time_slot_id)
+);
+GO
+
+-- 11. SESSION (buoi hoc cu the; gio lay tu time_slot)
+CREATE TABLE session (
+    session_id   INT PRIMARY KEY IDENTITY(1,1),
+    class_id     INT NOT NULL,
+    session_no   INT NOT NULL CHECK (session_no > 0),
+    session_date DATE NOT NULL,
+    time_slot_id INT NOT NULL,
+    coach_id     INT NOT NULL,
+    room_id      INT NOT NULL,
+    status       VARCHAR(20) NOT NULL DEFAULT 'Scheduled'
+                 CHECK (status IN ('Scheduled', 'Completed', 'Cancelled')),
+    session_note NVARCHAR(500) NULL,
+    CONSTRAINT FK_Session_Class    FOREIGN KEY (class_id)     REFERENCES class(class_id),
+    CONSTRAINT FK_Session_TimeSlot FOREIGN KEY (time_slot_id) REFERENCES time_slot(time_slot_id),
+    CONSTRAINT FK_Session_Coach    FOREIGN KEY (coach_id)     REFERENCES [user](user_id),
+    CONSTRAINT FK_Session_Room     FOREIGN KEY (room_id)      REFERENCES room(room_id),
+    CONSTRAINT UQ_Class_Session    UNIQUE (class_id, session_no)
+);
+GO
+
+-- Buoi da huy khong giu phong/coach
+CREATE UNIQUE INDEX UX_Session_Room  ON session (room_id,  session_date, time_slot_id) WHERE status <> 'Cancelled';
+CREATE UNIQUE INDEX UX_Session_Coach ON session (coach_id, session_date, time_slot_id) WHERE status <> 'Cancelled';
+GO
+
+-- 12. ATTENDANCE
 CREATE TABLE attendance (
     attendance_id INT PRIMARY KEY IDENTITY(1,1),
-    schedule_id   INT NOT NULL,
+    session_id    INT NOT NULL,
     member_id     INT NOT NULL,
     status        VARCHAR(20) NOT NULL DEFAULT 'Absent'
                   CHECK (status IN ('Present', 'Absent', 'Late', 'Excused')),
@@ -156,92 +197,13 @@ CREATE TABLE attendance (
     remarks       NVARCHAR(255) NULL,
     marked_by     INT NULL,
     updated_at    DATETIME NOT NULL DEFAULT GETDATE(),
-    CONSTRAINT FK_Attendance_Schedule FOREIGN KEY (schedule_id) REFERENCES schedule(schedule_id),
-    CONSTRAINT FK_Attendance_Member   FOREIGN KEY (member_id)   REFERENCES [user](user_id),
-    CONSTRAINT FK_Attendance_Marker   FOREIGN KEY (marked_by)   REFERENCES [user](user_id),
-    CONSTRAINT UQ_Schedule_Member UNIQUE (schedule_id, member_id)
+    CONSTRAINT FK_Attendance_Session FOREIGN KEY (session_id) REFERENCES session(session_id),
+    CONSTRAINT FK_Attendance_Member  FOREIGN KEY (member_id)  REFERENCES [user](user_id),
+    CONSTRAINT FK_Attendance_Marker  FOREIGN KEY (marked_by)  REFERENCES [user](user_id),
+    CONSTRAINT UQ_Session_Member UNIQUE (session_id, member_id)
 );
 GO
 
--- =====================================================
--- 10. PROCEDURE: Member tự đăng ký tài khoản
--- =====================================================
-CREATE PROCEDURE sp_register_member
-    @full_name     NVARCHAR(100),
-    @email         VARCHAR(100),
-    @password_hash VARCHAR(255),
-    @phone         VARCHAR(20) = NULL
-AS
-BEGIN
-    SET NOCOUNT ON;
-
-    DECLARE @member_role INT = (SELECT role_id FROM [role] WHERE role_name = N'Member');
-
-    INSERT INTO [user] (role_id, full_name, email, password_hash, phone, created_by)
-    VALUES (@member_role, @full_name, @email, @password_hash, @phone, NULL);
-END;
-GO
-
--- =====================================================
--- 11. PROCEDURE: Manager tạo tài khoản Staff hoặc Coach
--- =====================================================
-CREATE PROCEDURE sp_create_staff_coach
-    @actor_id      INT,            -- ID Manager đang thực hiện
-    @role_name     NVARCHAR(50),   -- 'Staff' hoặc 'Coach'
-    @full_name     NVARCHAR(100),
-    @email         VARCHAR(100),
-    @password_hash VARCHAR(255),
-    @phone         VARCHAR(20) = NULL
-AS
-BEGIN
-    SET NOCOUNT ON;
-
-    IF NOT EXISTS (
-        SELECT 1
-        FROM [user] u
-        JOIN [role] r ON r.role_id = u.role_id
-        WHERE u.user_id = @actor_id
-          AND r.role_name = N'Manager'
-          AND u.status = 'Active'
-    )
-    BEGIN
-        RAISERROR(N'Chỉ Manager đang hoạt động mới được tạo tài khoản.', 16, 1);
-        RETURN;
-    END
-
-    IF @role_name NOT IN (N'Staff', N'Coach')
-    BEGIN
-        RAISERROR(N'Chỉ được tạo tài khoản Staff hoặc Coach.', 16, 1);
-        RETURN;
-    END
-
-    DECLARE @role_id INT = (SELECT role_id FROM [role] WHERE role_name = @role_name);
-
-    INSERT INTO [user] (role_id, full_name, email, password_hash, phone, created_by)
-    VALUES (@role_id, @full_name, @email, @password_hash, @phone, @actor_id);
-END;
-GO
-
--- =====================================================
--- 12. PHÂN QUYỀN: ứng dụng chỉ ghi qua procedure
--- =====================================================
-CREATE USER app_user WITHOUT LOGIN;   -- thay bằng login thật của ứng dụng khi triển khai
-GO
-
-DENY INSERT, UPDATE, DELETE ON [user]   TO app_user;
-DENY INSERT, UPDATE, DELETE ON payment  TO app_user;
-GRANT EXECUTE ON sp_register_member    TO app_user;
-GRANT EXECUTE ON sp_create_staff_coach TO app_user;
-GO
-
--- =====================================================
--- 13. MANAGER ĐẦU TIÊN (chạy một lần khi cài đặt)
--- =====================================================
-INSERT INTO [user] (role_id, full_name, email, password_hash, phone, created_by)
-VALUES ((SELECT role_id FROM [role] WHERE role_name = N'Manager'),
-        N'Quản lý trung tâm',
-        'manager@sportcenter.local',
-        '<hash_bcrypt_đã_băm>',    -- thay bằng hash thật từ ứng dụng
-        NULL,
-        NULL);
+-- 13. Kieu bang truyen danh sach id vao procedure
+CREATE TYPE dbo.IdList AS TABLE (id INT PRIMARY KEY);
 GO
