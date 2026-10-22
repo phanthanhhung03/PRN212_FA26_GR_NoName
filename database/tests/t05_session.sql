@@ -37,7 +37,7 @@ GO
 -- ===== Batch 2: reassign coach of other sport -> 50003 =====
 BEGIN TRAN;
 :r tests/_fixture.sql
-DECLARE @slots dbo.IdList, @classA INT, @sA2 INT, @err INT = 0, @c INT;
+DECLARE @slots dbo.IdList, @classA INT, @sA2 INT, @err INT = 0;
 INSERT INTO @slots (id) VALUES (@slotMon), (@slotWed);
 EXEC dbo.sp_create_class @mgr, @course, N't5 A', '2026-11-02', 8, @coachA, @roomS, @slots, @classA OUTPUT;
 SELECT @sA2 = session_id FROM session WHERE class_id = @classA AND session_no = 2;
@@ -63,7 +63,7 @@ GO
 -- ===== Batch 4: reassign by Member -> 50001 =====
 BEGIN TRAN;
 :r tests/_fixture.sql
-DECLARE @slots dbo.IdList, @classA INT, @sA2 INT, @err INT = 0, @c INT;
+DECLARE @slots dbo.IdList, @classA INT, @sA2 INT, @err INT = 0;
 INSERT INTO @slots (id) VALUES (@slotMon), (@slotWed);
 EXEC dbo.sp_create_class @mgr, @course, N't5 A', '2026-11-02', 8, @coachA, @roomS, @slots, @classA OUTPUT;
 SELECT @sA2 = session_id FROM session WHERE class_id = @classA AND session_no = 2;
@@ -296,6 +296,43 @@ EXEC dbo.sp_cancel_session @mgr, @sA2, @makeup OUTPUT;
 BEGIN TRY EXEC dbo.sp_add_makeup_session @member, @classA, '2026-11-16', @slotMon, @coachA, @roomL, @sid OUTPUT; END TRY
 BEGIN CATCH SET @err = ERROR_NUMBER(); END CATCH
 IF @err <> 50001 THROW 60000, N'FAIL: member makeup must be 50001', 1;
+ROLLBACK;
+GO
+
+-- ===== Batch 18: a Cancelled session releases its coach and room =====
+BEGIN TRAN;
+:r tests/_fixture.sql
+DECLARE @slots dbo.IdList, @classA INT, @classB INT, @sA2 INT, @sB1 INT, @makeup INT, @n INT;
+INSERT INTO @slots (id) VALUES (@slotMon), (@slotWed);
+EXEC dbo.sp_create_class @mgr, @course, N't5 A', '2026-11-02', 8, @coachA, @roomS, @slots, @classA OUTPUT;
+-- class B (coachB, roomL): session 1 = 2026-11-04 Wed slotWed, same date/slot as A's session 2
+EXEC dbo.sp_create_class @mgr, @course, N't5 B', '2026-11-04', 8, @coachB, @roomL, @slots, @classB OUTPUT;
+SELECT @sA2 = session_id FROM session WHERE class_id = @classA AND session_no = 2;
+SELECT @sB1 = session_id FROM session
+WHERE class_id = @classB AND session_no = 1 AND session_date = '2026-11-04' AND time_slot_id = @slotWed;
+IF @sA2 IS NULL OR @sB1 IS NULL THROW 60000, N'FAIL: setup sessions not found', 1;
+EXEC dbo.sp_cancel_session @mgr, @sA2, @makeup OUTPUT;
+-- coachA and roomS are now free on 2026-11-04 slotWed: moving B's session there must succeed
+EXEC dbo.sp_reassign_session @mgr, @sB1, @coachA, @roomS;
+SELECT @n = COUNT(*) FROM session
+WHERE session_id = @sB1 AND class_id = @classB AND coach_id = @coachA AND room_id = @roomS
+  AND session_date = '2026-11-04' AND time_slot_id = @slotWed AND status = 'Scheduled';
+IF ISNULL(@n, 0) <> 1 THROW 60000, N'FAIL: cancelled session must release coachA/roomS on 2026-11-04', 1;
+ROLLBACK;
+GO
+
+-- ===== Batch 19: reassign to the current coach/room is not a conflict with itself =====
+BEGIN TRAN;
+:r tests/_fixture.sql
+DECLARE @slots dbo.IdList, @classA INT, @sA2 INT, @n INT;
+INSERT INTO @slots (id) VALUES (@slotMon), (@slotWed);
+EXEC dbo.sp_create_class @mgr, @course, N't5 A', '2026-11-02', 8, @coachA, @roomS, @slots, @classA OUTPUT;
+SELECT @sA2 = session_id FROM session WHERE class_id = @classA AND session_no = 2;
+EXEC dbo.sp_reassign_session @mgr, @sA2, @coachA, @roomS;
+SELECT @n = COUNT(*) FROM session
+WHERE session_id = @sA2 AND class_id = @classA AND session_no = 2 AND coach_id = @coachA AND room_id = @roomS
+  AND session_date = '2026-11-04' AND time_slot_id = @slotWed AND status = 'Scheduled';
+IF ISNULL(@n, 0) <> 1 THROW 60000, N'FAIL: self-reassign must succeed and leave the row unchanged', 1;
 ROLLBACK;
 GO
 
