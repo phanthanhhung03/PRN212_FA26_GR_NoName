@@ -95,6 +95,105 @@ namespace SportCenter.Services
                 .ToListAsync();
         }
 
+        // Các coach và phòng có thể chọn khi đổi một buổi (cùng môn với lớp), kèm cờ bận / không đủ chỗ.
+        // Chỉ dùng được cho buổi chưa bắt đầu.
+        public async Task<ReassignOptionsDto> GetReassignOptionsAsync(int sessionId)
+        {
+            RequireManager();
+            using var db = new SportCenterDbContext();
+
+            var s = await db.Sessions.AsNoTracking()
+                .Where(x => x.SessionId == sessionId)
+                .Select(x => new
+                {
+                    x.SessionId, x.SessionNo, x.SessionDate, x.TimeSlotId, x.Status, x.CoachId, x.RoomId,
+                    Day = x.TimeSlot.DayOfWeek, x.TimeSlot.StartTime, x.TimeSlot.EndTime,
+                    SportId = x.Class.Course.SportId, x.Class.MaxCapacity
+                })
+                .FirstOrDefaultAsync()
+                ?? throw new InvalidOperationException("Không tìm thấy buổi học này.");
+
+            if (!SessionRules.CanModify(s.Status, s.SessionDate, s.StartTime))
+            {
+                throw new InvalidOperationException("Buổi học đã bắt đầu hoặc không còn sửa được.");
+            }
+
+            // Coach và phòng đang có buổi khác (chưa hủy) đúng ngày và khung giờ này.
+            var others = await db.Sessions.AsNoTracking()
+                .Where(x => x.SessionDate == s.SessionDate && x.TimeSlotId == s.TimeSlotId
+                            && x.Status != "Cancelled" && x.SessionId != s.SessionId)
+                .Select(x => new { x.CoachId, x.RoomId })
+                .ToListAsync();
+            HashSet<int> busyCoaches = others.Select(o => o.CoachId).ToHashSet();
+            HashSet<int> busyRooms = others.Select(o => o.RoomId).ToHashSet();
+
+            // Luôn có coach và phòng hiện tại trong danh sách, dù đã ngừng hoạt động.
+            var coaches = await db.Users.AsNoTracking()
+                .Where(u => u.UserId == s.CoachId
+                            || (u.SportId == s.SportId && u.Status == "Active" && u.Role.RoleName == "Coach"))
+                .OrderBy(u => u.FullName)
+                .Select(u => new { u.UserId, u.FullName })
+                .ToListAsync();
+            var rooms = await db.Rooms.AsNoTracking()
+                .Where(r => r.RoomId == s.RoomId || (r.SportId == s.SportId && r.Status == "Active"))
+                .OrderBy(r => r.RoomName)
+                .Select(r => new { r.RoomId, r.RoomName, r.Capacity })
+                .ToListAsync();
+
+            return new ReassignOptionsDto(
+                s.SessionId, s.SessionNo, s.SessionDate, s.Day, s.StartTime, s.EndTime,
+                s.CoachId, s.RoomId,
+                coaches.Select(c => new CoachChoiceDto(c.UserId, c.FullName, busyCoaches.Contains(c.UserId), c.UserId == s.CoachId)).ToList(),
+                rooms.Select(r => new RoomChoiceDto(r.RoomId, r.RoomName, r.Capacity, busyRooms.Contains(r.RoomId), r.Capacity < s.MaxCapacity, r.RoomId == s.RoomId)).ToList());
+        }
+
+        // Đổi coach và/hoặc phòng của một buổi chưa bắt đầu (truyền null cho mục giữ nguyên). Gọi sp_reassign_session.
+        public async Task ReassignSessionAsync(int sessionId, int? coachId, int? roomId)
+        {
+            RequireManager();
+            using var db = new SportCenterDbContext();
+
+            var s = await db.Sessions.AsNoTracking()
+                .Where(x => x.SessionId == sessionId)
+                .Select(x => new { x.Status, x.SessionDate, x.TimeSlot.StartTime })
+                .FirstOrDefaultAsync()
+                ?? throw new InvalidOperationException("Không tìm thấy buổi học này.");
+            if (!SessionRules.CanModify(s.Status, s.SessionDate, s.StartTime))
+            {
+                throw new InvalidOperationException("Buổi học đã bắt đầu hoặc không còn sửa được.");
+            }
+
+            var conn = (SqlConnection)db.Database.GetDbConnection();
+            await conn.OpenAsync();
+
+            using var cmd = conn.CreateCommand();
+            cmd.CommandType = CommandType.StoredProcedure;
+            cmd.CommandText = "dbo.sp_reassign_session";
+            cmd.Parameters.AddWithValue("@actor_id", CurrentUser.Value!.UserId);
+            cmd.Parameters.AddWithValue("@session_id", sessionId);
+            cmd.Parameters.AddWithValue("@coach_id", (object?)coachId ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("@room_id", (object?)roomId ?? DBNull.Value);
+
+            try
+            {
+                await cmd.ExecuteNonQueryAsync();
+            }
+            catch (SqlException ex)
+            {
+                throw new InvalidOperationException(ex.Number switch
+                {
+                    50001 => "Chỉ Manager đang hoạt động mới được đổi buổi học.",
+                    50003 => "Coach không hợp lệ (sai môn hoặc không hoạt động).",
+                    50004 => "Phòng không hợp lệ (sai môn hoặc không hoạt động).",
+                    50005 => "Phòng không đủ chỗ cho sĩ số của lớp.",
+                    50006 => "Coach đã bận vào khung giờ này. Vui lòng chọn coach khác.",
+                    50007 => "Phòng đã bận vào khung giờ này. Vui lòng chọn phòng khác.",
+                    50009 => "Buổi học không còn sửa được.",
+                    _ => "Không đổi được buổi học. Vui lòng thử lại."
+                }, ex);
+            }
+        }
+
         public async Task<List<CourseOptionDto>> GetCoursesAsync(int sportId)
         {
             RequireManager();
