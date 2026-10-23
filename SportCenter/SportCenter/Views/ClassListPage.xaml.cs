@@ -119,28 +119,7 @@ namespace SportCenter.Views
             }
         }
 
-        // Hiện thông báo ngắn ở đầu trang, tự ẩn sau 5 giây (hoặc bấm ✕).
-        private readonly System.Windows.Threading.DispatcherTimer _noticeTimer = new() { Interval = TimeSpan.FromSeconds(5) };
-
-        public void ShowNotice(string message)
-        {
-            NoticeText.Text = message;
-            NoticeBanner.Visibility = Visibility.Visible;
-
-            _noticeTimer.Stop();
-            _noticeTimer.Tick -= NoticeTimer_Tick;
-            _noticeTimer.Tick += NoticeTimer_Tick;
-            _noticeTimer.Start();
-        }
-
-        private void NoticeTimer_Tick(object? sender, EventArgs e) => HideNotice();
-
-        private void NoticeClose_Click(object sender, RoutedEventArgs e) => HideNotice();
-
-        private void HideNotice()
-        {
-            _noticeTimer.Stop();
-            NoticeBanner.Visibility = Visibility.Collapsed;
-        }
+        // Hiện thông báo ngắn ở đầu trang (tự ẩn sau 5 giây).
+        public void ShowNotice(string message) => Notice.Show(message);
     }
 }

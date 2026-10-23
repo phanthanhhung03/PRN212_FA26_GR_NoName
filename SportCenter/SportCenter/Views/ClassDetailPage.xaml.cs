@@ -84,12 +84,27 @@ namespace SportCenter.Views
 
         private void Back_Click(object sender, RoutedEventArgs e) => BackRequested?.Invoke(this, EventArgs.Empty);
 
+        // Bấm "Đổi" ở một buổi: mở hộp thoại đổi coach/phòng, lưu xong thì tải lại bảng.
+        private async void Reassign_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is not FrameworkElement { DataContext: SessionRow row }) return;
+
+            var dialog = new ReassignSessionDialog(row.SessionId) { Owner = Window.GetWindow(this) };
+            if (dialog.ShowDialog() == true)
+            {
+                await LoadAsync();
+                Notice.Show($"Đã đổi buổi {row.SessionNo}.");
+            }
+        }
+
         // Một dòng của bảng: chuyển dữ liệu buổi học thành chữ hiển thị.
         private sealed class SessionRow
         {
             public SessionRow(SessionItemDto s, bool isNext, DateOnly today)
             {
+                SessionId = s.SessionId;
                 SessionNo = s.SessionNo;
+                CanEdit = SessionRules.CanModify(s.Status, s.SessionDate, s.StartTime);
                 DateText = $"Thứ {s.DayOfWeek}, {s.SessionDate:dd/MM/yyyy}";
                 TimeText = $"{s.StartTime:HH:mm} – {s.EndTime:HH:mm}";
                 RoomName = s.RoomName;
@@ -116,6 +131,8 @@ namespace SportCenter.Views
                 NoteText = string.Join(" · ", notes);
             }
 
+            public int SessionId { get; }
+            public bool CanEdit { get; }
             public int SessionNo { get; }
             public string DateText { get; }
             public string TimeText { get; }
