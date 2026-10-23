@@ -23,7 +23,7 @@ public partial class StaffShellView : UserControl
     private static readonly List<NavItem> AllItems = new()
     {
         new NavItem("Lớp học",            new[] { Manager }, () => new ClassListPage()),
-        new NavItem("Môn và khóa học",    new[] { Manager }, () => new PlaceholderPage("Môn và khóa học", "UC11")),
+        new NavItem("Môn và khóa học",    new[] { Manager }, () => new CatalogPage()),
         new NavItem("Tài khoản",          new[] { Manager }, () => new PlaceholderPage("Tài khoản", "UC14")),
         new NavItem("Báo cáo",            new[] { Manager }, () => new PlaceholderPage("Báo cáo", "UC15")),
         new NavItem("Ghi danh hộ",        new[] { Staff },   () => new PlaceholderPage("Ghi danh hộ", "UC10")),

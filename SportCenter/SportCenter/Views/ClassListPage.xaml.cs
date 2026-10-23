@@ -36,7 +36,7 @@ namespace SportCenter.Views
             _loading = true;
             try
             {
-                var sports = await _service.GetSportsAsync();
+                var sports = await _service.GetAllSportsAsync();
                 sports.Insert(0, new Dtos.SportOptionDto(0, "Tất cả các môn"));
                 SportFilter.ItemsSource = sports;
                 SportFilter.SelectedIndex = 0;

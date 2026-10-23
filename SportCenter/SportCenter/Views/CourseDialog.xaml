@@ -1,0 +1,71 @@
+<Window x:Class="SportCenter.Views.CourseDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Khóa học" Width="480" SizeToContent="Height" ResizeMode="NoResize"
+        WindowStartupLocation="CenterOwner" ShowInTaskbar="False"
+        Background="{StaticResource BackgroundBrush}"
+        TextElement.Foreground="{StaticResource TextBrush}">
+    <Window.Resources>
+        <Style x:Key="FieldLabel" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Margin" Value="0,0,0,6"/>
+        </Style>
+    </Window.Resources>
+
+    <StackPanel Margin="24">
+        <TextBlock x:Name="TitleText" Text="Thêm khóa" FontSize="20" FontWeight="Bold"
+                   Foreground="{StaticResource PrimaryDarkBrush}"/>
+        <TextBlock x:Name="SportText" FontSize="13" Foreground="{StaticResource MutedTextBrush}" Margin="0,4,0,18"/>
+
+        <TextBlock Text="Tên khóa" Style="{StaticResource FieldLabel}"/>
+        <TextBox x:Name="NameBox" Style="{StaticResource InputTextBox}" MaxLength="150" TextChanged="Input_Changed"/>
+        <TextBlock x:Name="NameError" Style="{StaticResource FieldError}"/>
+
+        <TextBlock Text="Level" Style="{StaticResource FieldLabel}" Margin="0,14,0,6"/>
+        <ComboBox x:Name="LevelBox" SelectionChanged="Level_Changed"/>
+        <TextBlock x:Name="LevelError" Style="{StaticResource FieldError}"/>
+
+        <Grid Margin="0,14,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="14"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <StackPanel Grid.Column="0">
+                <TextBlock Text="Số buổi" Style="{StaticResource FieldLabel}"/>
+                <TextBox x:Name="SessionsBox" Style="{StaticResource InputTextBox}" MaxLength="3"
+                         PreviewKeyDown="Digits_PreviewKeyDown" PreviewTextInput="Digits_PreviewTextInput" TextChanged="Input_Changed"
+                         DataObject.Pasting="Digits_Pasting"/>
+                <TextBlock x:Name="SessionsError" Style="{StaticResource FieldError}"/>
+            </StackPanel>
+            <StackPanel Grid.Column="2">
+                <TextBlock Text="Học phí (₫)" Style="{StaticResource FieldLabel}"/>
+                <TextBox x:Name="FeeBox" Style="{StaticResource InputTextBox}" MaxLength="9"
+                         PreviewKeyDown="Digits_PreviewKeyDown" PreviewTextInput="Digits_PreviewTextInput" TextChanged="Input_Changed"
+                         DataObject.Pasting="Digits_Pasting"/>
+                <TextBlock x:Name="FeeError" Style="{StaticResource FieldError}"/>
+            </StackPanel>
+        </Grid>
+        <TextBlock x:Name="SessionsNote" Visibility="Collapsed" FontSize="12" TextWrapping="Wrap"
+                   Foreground="{StaticResource MutedTextBrush}" Margin="0,6,0,0"
+                   Text="Khóa đã có lớp nên không đổi được số buổi. Học phí mới chỉ áp dụng cho các lần ghi danh sau."/>
+
+        <TextBlock Text="Mô tả (không bắt buộc)" Style="{StaticResource FieldLabel}" Margin="0,14,0,6"/>
+        <TextBox x:Name="DescriptionBox" Style="{StaticResource InputTextBox}" MaxLength="1000"
+                 AcceptsReturn="True" TextWrapping="Wrap" Height="80" VerticalContentAlignment="Top"
+                 VerticalScrollBarVisibility="Auto" TextChanged="Input_Changed"/>
+
+        <Border x:Name="ErrorBanner" Visibility="Collapsed" Background="{StaticResource ErrorBackgroundBrush}"
+                CornerRadius="8" Padding="12,8" Margin="0,14,0,0">
+            <TextBlock x:Name="ErrorText" Foreground="{StaticResource ErrorBrush}" FontSize="13" TextWrapping="Wrap"/>
+        </Border>
+
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,20,0,0">
+            <Button x:Name="CancelButton" Content="Hủy bỏ" IsCancel="True" Width="100" Margin="0,0,10,0"
+                    Style="{StaticResource SecondaryButton}"/>
+            <Button x:Name="SaveButton" Content="Lưu" IsDefault="True" Width="100"
+                    Style="{StaticResource PrimaryButton}" Click="Save_Click"/>
+        </StackPanel>
+    </StackPanel>
+</Window>

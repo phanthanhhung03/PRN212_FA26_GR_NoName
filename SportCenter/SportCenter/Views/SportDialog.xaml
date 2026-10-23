@@ -1,0 +1,41 @@
+<Window x:Class="SportCenter.Views.SportDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Môn thể thao" Width="460" SizeToContent="Height" ResizeMode="NoResize"
+        WindowStartupLocation="CenterOwner" ShowInTaskbar="False"
+        Background="{StaticResource BackgroundBrush}"
+        TextElement.Foreground="{StaticResource TextBrush}">
+    <Window.Resources>
+        <Style x:Key="FieldLabel" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Margin" Value="0,0,0,6"/>
+        </Style>
+    </Window.Resources>
+
+    <StackPanel Margin="24">
+        <TextBlock x:Name="TitleText" Text="Thêm môn" FontSize="20" FontWeight="Bold"
+                   Foreground="{StaticResource PrimaryDarkBrush}" Margin="0,0,0,18"/>
+
+        <TextBlock Text="Tên môn" Style="{StaticResource FieldLabel}"/>
+        <TextBox x:Name="NameBox" Style="{StaticResource InputTextBox}" MaxLength="100" TextChanged="Input_Changed"/>
+        <TextBlock x:Name="NameError" Style="{StaticResource FieldError}"/>
+
+        <TextBlock Text="Mô tả (không bắt buộc)" Style="{StaticResource FieldLabel}" Margin="0,14,0,6"/>
+        <TextBox x:Name="DescriptionBox" Style="{StaticResource InputTextBox}" MaxLength="1000"
+                 AcceptsReturn="True" TextWrapping="Wrap" Height="90" VerticalContentAlignment="Top"
+                 VerticalScrollBarVisibility="Auto" TextChanged="Input_Changed"/>
+
+        <Border x:Name="ErrorBanner" Visibility="Collapsed" Background="{StaticResource ErrorBackgroundBrush}"
+                CornerRadius="8" Padding="12,8" Margin="0,14,0,0">
+            <TextBlock x:Name="ErrorText" Foreground="{StaticResource ErrorBrush}" FontSize="13" TextWrapping="Wrap"/>
+        </Border>
+
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,20,0,0">
+            <Button x:Name="CancelButton" Content="Hủy bỏ" IsCancel="True" Width="100" Margin="0,0,10,0"
+                    Style="{StaticResource SecondaryButton}"/>
+            <Button x:Name="SaveButton" Content="Lưu" IsDefault="True" Width="100"
+                    Style="{StaticResource PrimaryButton}" Click="Save_Click"/>
+        </StackPanel>
+    </StackPanel>
+</Window>
