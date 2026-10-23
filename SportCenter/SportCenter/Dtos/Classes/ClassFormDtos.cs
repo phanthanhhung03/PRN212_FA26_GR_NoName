@@ -4,7 +4,7 @@ using System.Collections.Generic;
 namespace SportCenter.Dtos
 {
     // Dữ liệu cho form "Mở lớp mới" (UC12, UC13).
-    public record CourseOptionDto(int CourseId, string CourseName, int TotalSessions);
+    public record CourseOptionDto(int CourseId, string CourseName, int TotalSessions, string? Level);
     public record TimeSlotDto(int TimeSlotId, byte DayOfWeek, TimeOnly StartTime, TimeOnly EndTime);
     public record CoachOptionDto(int UserId, string FullName);
     public record RoomOptionDto(int RoomId, string RoomName, int Capacity);

@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using SportCenter.Entities;
 using SportCenter.Services;
 using System;
@@ -23,6 +23,7 @@ namespace SportCenter.Views
         private readonly ClassService _service = new ClassService();
         private bool _loading;
         public event EventHandler? NewClassRequested;
+        public event EventHandler<int>? ClassDetailRequested;        // tham số: class_id của lớp muốn xem
 
         public ClassListPage()
         {
@@ -89,5 +90,57 @@ namespace SportCenter.Views
         }
 
         private void NewClassButton_Click(object sender, RoutedEventArgs e) => NewClassRequested?.Invoke(this, EventArgs.Empty);
+
+        // Bấm nút "Xem lịch" ở cuối dòng: lấy lớp của đúng dòng đó.
+        private void ViewSchedule_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is FrameworkElement { DataContext: Dtos.ClassListItemDto item })
+            {
+                ClassDetailRequested?.Invoke(this, item.ClassId);
+            }
+        }
+
+        // Bấm đúp vào một dòng dữ liệu (không phải tiêu đề, thanh cuộn hay chỗ trống) để xem lịch.
+        private void ClassGrid_MouseDoubleClick(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            DependencyObject? source = e.OriginalSource as DependencyObject;
+            // Dừng khi gặp nút (đã có Click riêng) hoặc tiêu đề cột; chỉ đi lên theo cây hiển thị (Run, Hyperlink... không có cha hiển thị).
+            while (source is System.Windows.Media.Visual
+                   && source is not DataGridRow
+                   && source is not System.Windows.Controls.Primitives.DataGridColumnHeader
+                   && source is not System.Windows.Controls.Primitives.ButtonBase)
+            {
+                source = System.Windows.Media.VisualTreeHelper.GetParent(source);
+            }
+
+            if (source is DataGridRow { Item: Dtos.ClassListItemDto item })
+            {
+                ClassDetailRequested?.Invoke(this, item.ClassId);
+            }
+        }
+
+        // Hiện thông báo ngắn ở đầu trang, tự ẩn sau 5 giây (hoặc bấm ✕).
+        private readonly System.Windows.Threading.DispatcherTimer _noticeTimer = new() { Interval = TimeSpan.FromSeconds(5) };
+
+        public void ShowNotice(string message)
+        {
+            NoticeText.Text = message;
+            NoticeBanner.Visibility = Visibility.Visible;
+
+            _noticeTimer.Stop();
+            _noticeTimer.Tick -= NoticeTimer_Tick;
+            _noticeTimer.Tick += NoticeTimer_Tick;
+            _noticeTimer.Start();
+        }
+
+        private void NoticeTimer_Tick(object? sender, EventArgs e) => HideNotice();
+
+        private void NoticeClose_Click(object sender, RoutedEventArgs e) => HideNotice();
+
+        private void HideNotice()
+        {
+            _noticeTimer.Stop();
+            NoticeBanner.Visibility = Visibility.Collapsed;
+        }
     }
 }

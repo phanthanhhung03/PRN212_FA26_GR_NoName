@@ -26,7 +26,7 @@ namespace SportCenter.Services
             return await query
                 .OrderBy(c => c.StartDate)
                 .Select(c => new ClassListItemDto(
-                    c.ClassId, c.ClassName, c.Course.Sport.SportName, c.Course.CourseName,
+                    c.ClassId, c.ClassName, c.Course.Sport.SportName, c.Course.Level,
                     c.Coach != null ? c.Coach.FullName : null,
                     c.Room.RoomName,
                     c.StartDate, c.EndDate, c.MaxCapacity,
@@ -57,6 +57,44 @@ namespace SportCenter.Services
                 .ToListAsync();
         }
 
+        // Thông tin một lớp cho trang chi tiết; null nếu không có lớp này.
+        public async Task<ClassDetailDto?> GetClassDetailAsync(int classId)
+        {
+            RequireManager();
+            using var db = new SportCenterDbContext();
+            return await db.Classes.AsNoTracking()
+                .Where(c => c.ClassId == classId)
+                .Select(c => new ClassDetailDto(
+                    c.ClassId, c.ClassName, c.Course.Sport.SportName, c.Course.Level,
+                    c.Coach != null ? c.Coach.FullName : null,
+                    c.Room.RoomName,
+                    c.StartDate, c.EndDate,
+                    c.MaxCapacity,
+                    c.ClassMembers.Count(m => m.Status == "Active"),
+                    c.Status,
+                    c.Course.TotalSessions))
+                .FirstOrDefaultAsync();
+        }
+
+        // Các buổi học của một lớp theo thứ tự buổi, kèm phòng, coach và dấu hiệu đổi tạm / buổi bù.
+        public async Task<List<SessionItemDto>> GetClassSessionsAsync(int classId)
+        {
+            RequireManager();
+            using var db = new SportCenterDbContext();
+            return await db.Sessions.AsNoTracking()
+                .Where(s => s.ClassId == classId)
+                .OrderBy(s => s.SessionNo)
+                .Select(s => new SessionItemDto(
+                    s.SessionId, s.SessionNo, s.SessionDate, s.TimeSlot.DayOfWeek,
+                    s.TimeSlot.StartTime, s.TimeSlot.EndTime,
+                    s.Room.RoomName, s.Coach.FullName,
+                    s.Status,
+                    s.RoomId != s.Class.RoomId,
+                    s.Class.CoachId != null && s.CoachId != s.Class.CoachId,
+                    s.SessionNo > s.Class.Course.TotalSessions))
+                .ToListAsync();
+        }
+
         public async Task<List<CourseOptionDto>> GetCoursesAsync(int sportId)
         {
             RequireManager();
@@ -66,7 +104,7 @@ namespace SportCenter.Services
                 .OrderBy(c => c.CourseName)
                 .Select(c => new CourseOptionDto 
                 (
-                    c.CourseId, c.CourseName, c.TotalSessions
+                    c.CourseId, c.CourseName, c.TotalSessions, c.Level
                 ))
                 .ToListAsync();
         }
