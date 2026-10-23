@@ -103,8 +103,17 @@
 
                             <StackPanel Grid.Row="0" Grid.Column="2" Margin="0,0,0,14">
                                 <TextBlock Text="Khóa học" Style="{StaticResource FieldLabel}"/>
-                                <ComboBox x:Name="CourseBox" DisplayMemberPath="CourseName" IsEnabled="False"
-                                          SelectionChanged="Course_Changed"/>
+                                <ComboBox x:Name="CourseBox" IsEnabled="False" SelectionChanged="Course_Changed">
+                                    <ComboBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <TextBlock>
+                                                <Run Text="{Binding Level, Mode=OneWay}"/>
+                                                <Run Text="{Binding TotalSessions, Mode=OneWay, StringFormat=' · {0} buổi'}"
+                                                     Foreground="{StaticResource MutedTextBrush}"/>
+                                            </TextBlock>
+                                        </DataTemplate>
+                                    </ComboBox.ItemTemplate>
+                                </ComboBox>
                                 <TextBlock x:Name="CourseInfoText" Style="{StaticResource FieldHint}"/>
                             </StackPanel>
 

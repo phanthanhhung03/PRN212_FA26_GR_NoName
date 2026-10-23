@@ -72,19 +72,35 @@ public partial class StaffShellView : UserControl
         UserControl page = item.CreatePage();
         if (page is ClassListPage list)
         {
-            list.NewClassRequested += (_, _) => ShowClassForm();
+            WireClassList(list);
         }
         ShowPage(page);
     }
 
     private void LogoutButton_Click(object sender, RoutedEventArgs e) => LogoutRequested?.Invoke(this, EventArgs.Empty);
 
-    private void ShowClassList()
+    private void ShowClassList(string? notice = null)
     {
         PageTitleText.Text = "Lớp học";
         var list = new ClassListPage();
-        list.NewClassRequested += (_, _) => ShowClassForm();
+        WireClassList(list);
         ShowPage(list);
+        if (notice is not null) list.ShowNotice(notice);
+    }
+
+    // Đăng ký các sự kiện của trang danh sách lớp (dùng ở mọi nơi tạo ClassListPage).
+    private void WireClassList(ClassListPage list)
+    {
+        list.NewClassRequested += (_, _) => ShowClassForm();
+        list.ClassDetailRequested += (_, classId) => ShowClassDetail(classId);
+    }
+
+    private void ShowClassDetail(int classId)
+    {
+        PageTitleText.Text = "Chi tiết lớp";
+        var detail = new ClassDetailPage(classId);
+        detail.BackRequested += (_, _) => ShowClassList();
+        ShowPage(detail);
     }
 
     private void ShowClassForm()
@@ -92,7 +108,7 @@ public partial class StaffShellView : UserControl
         PageTitleText.Text = "Mở lớp mới";
         var form = new CreateClassPage();
         form.BackRequested += (_, _) => ShowClassList();
-        form.Created += (_, _) => ShowClassList();
+        form.Created += (_, _) => ShowClassList("Đã tạo lớp thành công.");
         ShowPage(form);
     }
 

@@ -203,7 +203,7 @@ namespace SportCenter.Views
         private async void Course_Changed(object sender, SelectionChangedEventArgs e)
         {
             if (!_ready || _suspend) return;
-            CourseInfoText.Text = CourseBox.SelectedItem is CourseOptionDto course ? $"{course.TotalSessions} buổi" : "";
+            CourseInfoText.Text = "";                                // Level và số buổi đã hiện ngay trong ô chọn
             await RefreshAvailabilityAsync();
         }
 

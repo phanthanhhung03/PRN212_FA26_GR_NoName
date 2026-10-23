@@ -4,10 +4,23 @@
     <Grid Margin="24">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <DockPanel Margin="0,0,0,16">
+        <!-- Thông báo ngắn (vd. "Đã tạo lớp thành công."), tự ẩn sau vài giây -->
+        <Border x:Name="NoticeBanner" Grid.Row="0" Visibility="Collapsed" HorizontalAlignment="Left"
+                Margin="0,0,0,12" Padding="12,6" Background="{StaticResource PrimaryLightBrush}" CornerRadius="8">
+            <StackPanel Orientation="Horizontal">
+                <TextBlock x:Name="NoticeText" FontSize="13" FontWeight="SemiBold"
+                           Foreground="{StaticResource PrimaryDarkBrush}" VerticalAlignment="Center"/>
+                <Button Content="✕" Style="{StaticResource LinkButton}" FontSize="11" Margin="12,0,0,0"
+                        Foreground="{StaticResource PrimaryDarkBrush}" VerticalAlignment="Center"
+                        Click="NoticeClose_Click"/>
+            </StackPanel>
+        </Border>
+
+        <DockPanel Grid.Row="1" Margin="0,0,0,16">
             <Button x:Name="NewClassButton" DockPanel.Dock="Right" Content="+ Mở lớp mới"
                     Style="{StaticResource PrimaryButton}" Width="140" Click="NewClassButton_Click"/>
             <ComboBox x:Name="SportFilter" Width="180" Margin="0,0,12,0"
@@ -17,18 +30,26 @@
                       SelectionChanged="Filter_Changed"/>
         </DockPanel>
 
-        <DataGrid x:Name="ClassGrid" Grid.Row="1" AutoGenerateColumns="False">
+        <DataGrid x:Name="ClassGrid" Grid.Row="2" AutoGenerateColumns="False" MouseDoubleClick="ClassGrid_MouseDoubleClick">
             <DataGrid.Columns>
-                <DataGridTextColumn Header="Lớp"          Binding="{Binding ClassName}"   MinWidth="130" Width="1.5*" ElementStyle="{StaticResource TrimCellText}"/>
-                <DataGridTextColumn Header="Môn"          Binding="{Binding SportName}"   MinWidth="90" Width="*"    ElementStyle="{StaticResource TrimCellText}"/>
-                <DataGridTextColumn Header="Khóa"         Binding="{Binding CourseName}"  MinWidth="150" Width="1.6*" ElementStyle="{StaticResource TrimCellText}"/>
+                <DataGridTextColumn Header="Lớp"          Binding="{Binding ClassName}"   MinWidth="130" Width="1.6*" ElementStyle="{StaticResource TrimCellText}"/>
+                <DataGridTextColumn Header="Môn"          Binding="{Binding SportName}"   MinWidth="90"  Width="*"    ElementStyle="{StaticResource TrimCellText}"/>
+                <DataGridTextColumn Header="Level"        Binding="{Binding Level}"       MinWidth="100" Width="*"    ElementStyle="{StaticResource TrimCellText}"/>
                 <DataGridTextColumn Header="Coach"        Binding="{Binding CoachName}"   MinWidth="130" Width="1.4*" ElementStyle="{StaticResource TrimCellText}"/>
                 <DataGridTextColumn Header="Phòng"        Binding="{Binding RoomName}"    MinWidth="130" Width="1.4*" ElementStyle="{StaticResource TrimCellText}"/>
-                <DataGridTextColumn Header="Khai giảng"   Binding="{Binding StartDate, StringFormat=dd/MM/yyyy}" Width="105"/>
-                <DataGridTextColumn Header="Kết thúc"     Binding="{Binding EndDate, StringFormat=dd/MM/yyyy}"   Width="105"/>
-                <DataGridTextColumn Header="Học viên"     Binding="{Binding ActiveMembers}" Width="85"  ElementStyle="{StaticResource CenterCellText}"/>
-                <DataGridTextColumn Header="Sĩ số"        Binding="{Binding MaxCapacity}"   Width="75"  ElementStyle="{StaticResource CenterCellText}"/>
-                <DataGridTextColumn Header="Trạng thái"   Binding="{Binding Status}"        Width="100"/>
+                <DataGridTextColumn Header="Khai giảng"   Binding="{Binding StartDate, StringFormat=dd/MM/yyyy}" Width="105" MinWidth="105"/>
+                <DataGridTextColumn Header="Kết thúc"     Binding="{Binding EndDate, StringFormat=dd/MM/yyyy}"   Width="105" MinWidth="105"/>
+                <DataGridTextColumn Header="Học viên"     Binding="{Binding ActiveMembers}" Width="85" MinWidth="85"  ElementStyle="{StaticResource CenterCellText}"/>
+                <DataGridTextColumn Header="Sĩ số"        Binding="{Binding MaxCapacity}"   Width="75" MinWidth="75"  ElementStyle="{StaticResource CenterCellText}"/>
+                <DataGridTextColumn Header="Trạng thái"   Binding="{Binding Status}"        Width="100" MinWidth="100"/>
+                <DataGridTemplateColumn Header="" Width="90" MinWidth="90">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <Button Content="Xem lịch" Style="{StaticResource LinkButton}" FontWeight="SemiBold"
+                                    HorizontalAlignment="Left" Click="ViewSchedule_Click"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
             </DataGrid.Columns>
         </DataGrid>
     </Grid>
