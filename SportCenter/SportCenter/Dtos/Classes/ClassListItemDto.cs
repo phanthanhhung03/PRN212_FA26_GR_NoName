@@ -9,7 +9,7 @@ namespace SportCenter.Dtos
     public record ClassListItemDto
         (
         int ClassId, string ClassName,
-        string SportName, string CourseName,string? CoachName,
+        string SportName, string? Level, string? CoachName,
         string RoomName, DateOnly StartDate, DateOnly? EndDate,
         int MaxCapacity, int ActiveMembers, string Status
         );
