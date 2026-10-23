@@ -1,0 +1,15 @@
+<UserControl x:Class="SportCenter.Views.NoticeBar"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Visibility="Collapsed" HorizontalAlignment="Left">
+    <!-- Thông báo ngắn, nhỏ gọn ở góc trái; tự ẩn sau 5 giây hoặc bấm ✕ -->
+    <Border Padding="12,6" Background="{StaticResource PrimaryLightBrush}" CornerRadius="8">
+        <StackPanel Orientation="Horizontal">
+            <TextBlock x:Name="MessageText" FontSize="13" FontWeight="SemiBold"
+                       Foreground="{StaticResource PrimaryDarkBrush}" VerticalAlignment="Center"/>
+            <Button Content="✕" Style="{StaticResource LinkButton}" FontSize="11" Margin="12,0,0,0"
+                    Foreground="{StaticResource PrimaryDarkBrush}" VerticalAlignment="Center"
+                    Click="Close_Click"/>
+        </StackPanel>
+    </Border>
+</UserControl>

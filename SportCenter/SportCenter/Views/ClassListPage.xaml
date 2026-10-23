@@ -1,6 +1,7 @@
 <UserControl x:Class="SportCenter.Views.ClassListPage"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:SportCenter.Views">
     <Grid Margin="24">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -9,16 +10,7 @@
         </Grid.RowDefinitions>
 
         <!-- Thông báo ngắn (vd. "Đã tạo lớp thành công."), tự ẩn sau vài giây -->
-        <Border x:Name="NoticeBanner" Grid.Row="0" Visibility="Collapsed" HorizontalAlignment="Left"
-                Margin="0,0,0,12" Padding="12,6" Background="{StaticResource PrimaryLightBrush}" CornerRadius="8">
-            <StackPanel Orientation="Horizontal">
-                <TextBlock x:Name="NoticeText" FontSize="13" FontWeight="SemiBold"
-                           Foreground="{StaticResource PrimaryDarkBrush}" VerticalAlignment="Center"/>
-                <Button Content="✕" Style="{StaticResource LinkButton}" FontSize="11" Margin="12,0,0,0"
-                        Foreground="{StaticResource PrimaryDarkBrush}" VerticalAlignment="Center"
-                        Click="NoticeClose_Click"/>
-            </StackPanel>
-        </Border>
+        <local:NoticeBar x:Name="Notice" Grid.Row="0" Margin="0,0,0,12"/>
 
         <DockPanel Grid.Row="1" Margin="0,0,0,16">
             <Button x:Name="NewClassButton" DockPanel.Dock="Right" Content="+ Mở lớp mới"
