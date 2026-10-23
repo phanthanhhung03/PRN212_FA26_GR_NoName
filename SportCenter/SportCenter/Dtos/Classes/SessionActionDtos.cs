@@ -9,6 +9,17 @@ namespace SportCenter.Dtos
         int CurrentCoachId, int CurrentRoomId,
         List<CoachChoiceDto> Coaches, List<RoomChoiceDto> Rooms);
 
+    // Kết quả hủy một buổi: nếu xếp được buổi bù tự động thì có thông tin buổi bù, ngược lại cả ba là null.
+    public record CancelSessionResultDto(int? MakeupSessionNo, DateOnly? MakeupDate, byte? MakeupDayOfWeek);
+
+    // Thông tin lớp cho hộp thoại "Xếp buổi bù": MissingSessions = số buổi còn thiếu so với khóa học.
+    public record MakeupContextDto(
+        int ClassId, string ClassName, DateOnly StartDate, int MissingSessions, int NextSessionNo,
+        int? DefaultCoachId, int DefaultRoomId);
+
+    // Coach và phòng có thể chọn cho một ngày và khung giờ cụ thể.
+    public record MakeupChoicesDto(List<CoachChoiceDto> Coaches, List<RoomChoiceDto> Rooms);
+
     // Một coach để chọn: IsBusy = đã có buổi khác đúng ngày và khung giờ này.
     public record CoachChoiceDto(int UserId, string FullName, bool IsBusy, bool IsCurrent)
     {

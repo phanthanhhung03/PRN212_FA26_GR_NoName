@@ -118,33 +118,12 @@ namespace SportCenter.Services
                 throw new InvalidOperationException("Buổi học đã bắt đầu hoặc không còn sửa được.");
             }
 
-            // Coach và phòng đang có buổi khác (chưa hủy) đúng ngày và khung giờ này.
-            var others = await db.Sessions.AsNoTracking()
-                .Where(x => x.SessionDate == s.SessionDate && x.TimeSlotId == s.TimeSlotId
-                            && x.Status != "Cancelled" && x.SessionId != s.SessionId)
-                .Select(x => new { x.CoachId, x.RoomId })
-                .ToListAsync();
-            HashSet<int> busyCoaches = others.Select(o => o.CoachId).ToHashSet();
-            HashSet<int> busyRooms = others.Select(o => o.RoomId).ToHashSet();
-
-            // Luôn có coach và phòng hiện tại trong danh sách, dù đã ngừng hoạt động.
-            var coaches = await db.Users.AsNoTracking()
-                .Where(u => u.UserId == s.CoachId
-                            || (u.SportId == s.SportId && u.Status == "Active" && u.Role.RoleName == "Coach"))
-                .OrderBy(u => u.FullName)
-                .Select(u => new { u.UserId, u.FullName })
-                .ToListAsync();
-            var rooms = await db.Rooms.AsNoTracking()
-                .Where(r => r.RoomId == s.RoomId || (r.SportId == s.SportId && r.Status == "Active"))
-                .OrderBy(r => r.RoomName)
-                .Select(r => new { r.RoomId, r.RoomName, r.Capacity })
-                .ToListAsync();
+            var (coaches, rooms) = await BuildChoicesAsync(
+                db, s.SportId, s.MaxCapacity, s.SessionDate, s.TimeSlotId, s.SessionId, s.CoachId, s.RoomId);
 
             return new ReassignOptionsDto(
                 s.SessionId, s.SessionNo, s.SessionDate, s.Day, s.StartTime, s.EndTime,
-                s.CoachId, s.RoomId,
-                coaches.Select(c => new CoachChoiceDto(c.UserId, c.FullName, busyCoaches.Contains(c.UserId), c.UserId == s.CoachId)).ToList(),
-                rooms.Select(r => new RoomChoiceDto(r.RoomId, r.RoomName, r.Capacity, busyRooms.Contains(r.RoomId), r.Capacity < s.MaxCapacity, r.RoomId == s.RoomId)).ToList());
+                s.CoachId, s.RoomId, coaches, rooms);
         }
 
         // Đổi coach và/hoặc phòng của một buổi chưa bắt đầu (truyền null cho mục giữ nguyên). Gọi sp_reassign_session.
@@ -191,6 +170,227 @@ namespace SportCenter.Services
                     50009 => "Buổi học không còn sửa được.",
                     _ => "Không đổi được buổi học. Vui lòng thử lại."
                 }, ex);
+            }
+        }
+
+        // Coach và phòng cùng môn có thể chọn cho một ngày + khung giờ, kèm cờ bận / không đủ chỗ.
+        // excludeSessionId: buổi đang sửa (không tính là bận). currentCoachId / currentRoomId: luôn có trong danh sách, dù đã ngừng hoạt động.
+        private static async Task<(List<CoachChoiceDto> Coaches, List<RoomChoiceDto> Rooms)> BuildChoicesAsync(
+            SportCenterDbContext db, int sportId, int maxCapacity, DateOnly date, int timeSlotId,
+            int? excludeSessionId, int? currentCoachId, int? currentRoomId)
+        {
+            // Coach và phòng đang có buổi khác (chưa hủy) đúng ngày và khung giờ này.
+            var others = await db.Sessions.AsNoTracking()
+                .Where(x => x.SessionDate == date && x.TimeSlotId == timeSlotId && x.Status != "Cancelled"
+                            && (excludeSessionId == null || x.SessionId != excludeSessionId))
+                .Select(x => new { x.CoachId, x.RoomId })
+                .ToListAsync();
+            HashSet<int> busyCoaches = others.Select(o => o.CoachId).ToHashSet();
+            HashSet<int> busyRooms = others.Select(o => o.RoomId).ToHashSet();
+
+            var coaches = await db.Users.AsNoTracking()
+                .Where(u => (currentCoachId != null && u.UserId == currentCoachId)
+                            || (u.SportId == sportId && u.Status == "Active" && u.Role.RoleName == "Coach"))
+                .OrderBy(u => u.FullName)
+                .Select(u => new { u.UserId, u.FullName })
+                .ToListAsync();
+            var rooms = await db.Rooms.AsNoTracking()
+                .Where(r => (currentRoomId != null && r.RoomId == currentRoomId) || (r.SportId == sportId && r.Status == "Active"))
+                .OrderBy(r => r.RoomName)
+                .Select(r => new { r.RoomId, r.RoomName, r.Capacity })
+                .ToListAsync();
+
+            return (
+                coaches.Select(c => new CoachChoiceDto(c.UserId, c.FullName, busyCoaches.Contains(c.UserId), c.UserId == currentCoachId)).ToList(),
+                rooms.Select(r => new RoomChoiceDto(r.RoomId, r.RoomName, r.Capacity, busyRooms.Contains(r.RoomId), r.Capacity < maxCapacity, r.RoomId == currentRoomId)).ToList());
+        }
+
+        // Hủy một buổi chưa bắt đầu. Hệ thống thử xếp buổi bù tự động; không xếp được (coach hoặc phòng của lớp bận) thì buổi vẫn bị hủy
+        // và kết quả không có buổi bù. Gọi sp_cancel_session.
+        public async Task<CancelSessionResultDto> CancelSessionAsync(int sessionId)
+        {
+            RequireManager();
+            using var db = new SportCenterDbContext();
+
+            var s = await db.Sessions.AsNoTracking()
+                .Where(x => x.SessionId == sessionId)
+                .Select(x => new { x.Status, x.SessionDate, x.TimeSlot.StartTime })
+                .FirstOrDefaultAsync()
+                ?? throw new InvalidOperationException("Không tìm thấy buổi học này.");
+            if (!SessionRules.CanModify(s.Status, s.SessionDate, s.StartTime))
+            {
+                throw new InvalidOperationException("Buổi học đã bắt đầu hoặc không còn hủy được.");
+            }
+
+            var conn = (SqlConnection)db.Database.GetDbConnection();
+            await conn.OpenAsync();
+
+            using var cmd = conn.CreateCommand();
+            cmd.CommandType = CommandType.StoredProcedure;
+            cmd.CommandText = "dbo.sp_cancel_session";
+            cmd.Parameters.AddWithValue("@actor_id", CurrentUser.Value!.UserId);
+            cmd.Parameters.AddWithValue("@session_id", sessionId);
+            var makeupId = new SqlParameter("@makeup_session_id", SqlDbType.Int) { Direction = ParameterDirection.Output };
+            cmd.Parameters.Add(makeupId);
+
+            try
+            {
+                await cmd.ExecuteNonQueryAsync();
+            }
+            catch (SqlException ex)
+            {
+                throw new InvalidOperationException(ex.Number switch
+                {
+                    50001 => "Chỉ Manager đang hoạt động mới được hủy buổi học.",
+                    50009 => "Buổi học không còn hủy được.",
+                    _ => "Không hủy được buổi học. Vui lòng thử lại."
+                }, ex);
+            }
+
+            if (makeupId.Value is not int newId)
+            {
+                return new CancelSessionResultDto(null, null, null);
+            }
+
+            // Buổi đã hủy xong; nếu chỉ đọc thông tin buổi bù bị lỗi thì vẫn báo hủy thành công (trang sẽ tải lại và hiện buổi bù).
+            try
+            {
+                var makeup = await db.Sessions.AsNoTracking()
+                    .Where(x => x.SessionId == newId)
+                    .Select(x => new { x.SessionNo, x.SessionDate, x.TimeSlot.DayOfWeek })
+                    .FirstOrDefaultAsync();
+                return makeup is null
+                    ? new CancelSessionResultDto(null, null, null)
+                    : new CancelSessionResultDto(makeup.SessionNo, makeup.SessionDate, makeup.DayOfWeek);
+            }
+            catch (Exception)
+            {
+                return new CancelSessionResultDto(null, null, null);
+            }
+        }
+
+        // Thông tin cho hộp thoại "Xếp buổi bù". Báo lỗi nếu lớp không tồn tại, đã hủy hoặc đã đủ số buổi.
+        public async Task<MakeupContextDto> GetMakeupContextAsync(int classId)
+        {
+            RequireManager();
+            using var db = new SportCenterDbContext();
+
+            var c = await db.Classes.AsNoTracking()
+                .Where(x => x.ClassId == classId)
+                .Select(x => new
+                {
+                    x.ClassId, x.ClassName, x.Status, x.StartDate, x.CoachId, x.RoomId,
+                    Total = x.Course.TotalSessions,
+                    Valid = x.Sessions.Count(s => s.Status != "Cancelled"),
+                    MaxNo = x.Sessions.Max(s => (int?)s.SessionNo) ?? 0
+                })
+                .FirstOrDefaultAsync()
+                ?? throw new InvalidOperationException("Không tìm thấy lớp này.");
+
+            if (c.Status is "Cancelled" or "Completed") throw new InvalidOperationException("Lớp đã kết thúc hoặc bị hủy, không xếp thêm buổi.");
+            int missing = c.Total - c.Valid;
+            if (missing <= 0) throw new InvalidOperationException("Lớp đã đủ số buổi.");
+
+            return new MakeupContextDto(c.ClassId, c.ClassName, c.StartDate, missing, c.MaxNo + 1, c.CoachId, c.RoomId);
+        }
+
+        // Coach và phòng có thể chọn để xếp buổi bù vào một ngày + khung giờ (khung phải đúng thứ của ngày và chưa qua giờ bắt đầu).
+        public async Task<MakeupChoicesDto> GetMakeupChoicesAsync(int classId, DateOnly date, int timeSlotId)
+        {
+            RequireManager();
+            using var db = new SportCenterDbContext();
+
+            var c = await db.Classes.AsNoTracking()
+                .Where(x => x.ClassId == classId)
+                .Select(x => new { SportId = x.Course.SportId, x.MaxCapacity, x.StartDate })
+                .FirstOrDefaultAsync()
+                ?? throw new InvalidOperationException("Không tìm thấy lớp này.");
+            await CheckMakeupSlotAsync(db, date, timeSlotId, c.StartDate);
+
+            var (coaches, rooms) = await BuildChoicesAsync(db, c.SportId, c.MaxCapacity, date, timeSlotId, null, null, null);
+            return new MakeupChoicesDto(coaches, rooms);
+        }
+
+        // Ngày không được trước ngày khai giảng của lớp; khung giờ phải tồn tại, đúng thứ của ngày và chưa qua giờ bắt đầu.
+        private static async Task CheckMakeupSlotAsync(SportCenterDbContext db, DateOnly date, int timeSlotId, DateOnly classStartDate)
+        {
+            if (date < classStartDate)
+            {
+                throw new InvalidOperationException("Ngày xếp buổi bù không được trước ngày khai giảng của lớp.");
+            }
+
+            var slot = await db.TimeSlots.AsNoTracking()
+                .Where(t => t.TimeSlotId == timeSlotId)
+                .Select(t => new { t.DayOfWeek, t.StartTime })
+                .FirstOrDefaultAsync()
+                ?? throw new InvalidOperationException("Không tìm thấy khung giờ này.");
+
+            if (slot.DayOfWeek != SessionRules.DbDayOfWeek(date))
+            {
+                throw new InvalidOperationException("Khung giờ không khớp với thứ của ngày đã chọn.");
+            }
+            if (SessionRules.HasStarted(date, slot.StartTime))
+            {
+                throw new InvalidOperationException("Khung giờ này đã qua, hãy chọn ngày hoặc khung khác.");
+            }
+        }
+
+        // Xếp thủ công một buổi bù cho lớp đang thiếu buổi. Trả về số buổi mới. Gọi sp_add_makeup_session.
+        public async Task<int> AddMakeupSessionAsync(int classId, DateOnly date, int timeSlotId, int coachId, int roomId)
+        {
+            RequireManager();
+            using var db = new SportCenterDbContext();
+            DateOnly classStart = await db.Classes.AsNoTracking()
+                .Where(x => x.ClassId == classId)
+                .Select(x => (DateOnly?)x.StartDate)
+                .FirstOrDefaultAsync()
+                ?? throw new InvalidOperationException("Không tìm thấy lớp này.");
+            await CheckMakeupSlotAsync(db, date, timeSlotId, classStart);
+
+            var conn = (SqlConnection)db.Database.GetDbConnection();
+            await conn.OpenAsync();
+
+            using var cmd = conn.CreateCommand();
+            cmd.CommandType = CommandType.StoredProcedure;
+            cmd.CommandText = "dbo.sp_add_makeup_session";
+            cmd.Parameters.AddWithValue("@actor_id", CurrentUser.Value!.UserId);
+            cmd.Parameters.AddWithValue("@class_id", classId);
+            cmd.Parameters.Add(DateParam("@session_date", date));
+            cmd.Parameters.AddWithValue("@time_slot_id", timeSlotId);
+            cmd.Parameters.AddWithValue("@coach_id", coachId);
+            cmd.Parameters.AddWithValue("@room_id", roomId);
+            var newId = new SqlParameter("@session_id", SqlDbType.Int) { Direction = ParameterDirection.Output };
+            cmd.Parameters.Add(newId);
+
+            try
+            {
+                await cmd.ExecuteNonQueryAsync();
+            }
+            catch (SqlException ex)
+            {
+                throw new InvalidOperationException(ex.Number switch
+                {
+                    50001 => "Chỉ Manager đang hoạt động mới được xếp buổi bù.",
+                    50003 => "Coach không hợp lệ (sai môn hoặc không hoạt động).",
+                    50004 => "Phòng không hợp lệ (sai môn hoặc không hoạt động).",
+                    50005 => "Phòng không đủ chỗ cho sĩ số của lớp.",
+                    50006 => "Coach đã bận vào khung giờ này. Vui lòng chọn coach khác.",
+                    50007 => "Phòng đã bận vào khung giờ này. Vui lòng chọn phòng khác.",
+                    50010 => "Khung giờ không khớp với thứ của ngày đã chọn.",
+                    50011 => "Lớp đã đủ số buổi hoặc không còn xếp buổi bù được.",
+                    _ => "Không xếp được buổi bù. Vui lòng thử lại."
+                }, ex);
+            }
+
+            // Buổi bù đã tạo xong; nếu chỉ đọc số buổi bị lỗi thì trả 0 (giao diện báo chung chung).
+            int id = (int)newId.Value;
+            try
+            {
+                return await db.Sessions.AsNoTracking().Where(x => x.SessionId == id).Select(x => x.SessionNo).FirstAsync();
+            }
+            catch (Exception)
+            {
+                return 0;
             }
         }
 
