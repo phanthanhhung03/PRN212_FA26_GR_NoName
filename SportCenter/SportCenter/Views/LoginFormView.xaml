@@ -28,8 +28,8 @@
                                FontSize="13" TextWrapping="Wrap"/>
                 </Border>
 
-                <TextBlock Text="Tên đăng nhập" FontSize="13" FontWeight="SemiBold" Margin="0,0,0,6"/>
-                <TextBox x:Name="UsernameBox" Style="{StaticResource InputTextBox}"
+                <TextBlock Text="Email" FontSize="13" FontWeight="SemiBold" Margin="0,0,0,6"/>
+                <TextBox x:Name="UserEmailBox" Style="{StaticResource InputTextBox}"
                          VerticalContentAlignment="Center" TextChanged="Input_Changed"/>
 
                 <TextBlock Text="Mật khẩu" FontSize="13" FontWeight="SemiBold" Margin="0,14,0,6"/>
@@ -53,7 +53,7 @@
                             Click="ForgotPassword_Click"/>
                 </Grid>
 
-                <Button Content="Đăng nhập" Style="{StaticResource PrimaryButton}" IsDefault="True"
+                <Button x:Name="LoginButton" Content="Đăng nhập" Style="{StaticResource PrimaryButton}" IsDefault="True"
                         Click="LoginButton_Click"/>
 
                 <StackPanel x:Name="RegisterPanel" Orientation="Horizontal" HorizontalAlignment="Center"
