@@ -1,3 +1,5 @@
+using SportCenter.Entities;
+using SportCenter.Services;
 using System;
 using System.Windows;
 using System.Windows.Controls;
@@ -11,9 +13,12 @@ public partial class LoginFormView : UserControl
     public event EventHandler? BackRequested;
     public event EventHandler? RegisterRequested;
 
+    private readonly bool _isMember;
+    public event EventHandler<User>? LoginSucceeded;
     public LoginFormView(bool isMember)
     {
         InitializeComponent();
+        _isMember = isMember;
 
         if (isMember)
         {
@@ -27,21 +32,44 @@ public partial class LoginFormView : UserControl
             SubtitleText.Text = "Dành cho Staff, Coach và Manager";
         }
 
-        Loaded += (_, _) => UsernameBox.Focus();
+        Loaded += (_, _) => UserEmailBox.Focus();
     }
 
     private void BackButton_Click(object sender, RoutedEventArgs e) => BackRequested?.Invoke(this, EventArgs.Empty);
 
     // UI mẫu: chưa xác thực thật, chỉ hiện lỗi khi để trống.
-    private void LoginButton_Click(object sender, RoutedEventArgs e)
+    private async void LoginButton_Click(object sender, RoutedEventArgs e)
     {
-        if (string.IsNullOrWhiteSpace(UsernameBox.Text) || PasswordBox.Password.Length == 0)
+        if (string.IsNullOrWhiteSpace(UserEmailBox.Text) || PasswordBox.Password.Length == 0)
         {
-            ShowError("Vui lòng nhập tên đăng nhập và mật khẩu.");
+            ShowError("Vui lòng nhập email và mật khẩu.");
             return;
         }
 
-        HideError();
+        LoginButton.IsEnabled = true;
+        try
+        {
+            User? user = await new AuthService()
+                .LoginAsync(UserEmailBox.Text, PasswordBox.Password, _isMember);
+
+            if (user is null)
+            {
+                ShowError("Email hoặc mật khẩu không đúng.");
+                return;
+            }
+
+            CurrentUser.Value = user;
+            LoginSucceeded?.Invoke(this, user);
+        }
+        catch
+        {
+            ShowError("Không kết nối được máy chủ. Vui lòng thử lại.");
+        }
+        finally
+        {
+            ShowError("Không kết nối được máy chủ. Vui lòng thử lại.");
+        }
+
     }
 
     private void ForgotPassword_Click(object sender, RoutedEventArgs e)

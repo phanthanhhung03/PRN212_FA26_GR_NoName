@@ -1,8 +1,10 @@
-﻿using System;
+﻿using SportCenter.Entities;
+using SportCenter.Services;
+using SportCenter.Views;
+using System;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media.Animation;
-using SportCenter.Views;
 
 namespace SportCenter;
 
@@ -27,7 +29,35 @@ public partial class MainWindow : Window
         var view = new LoginFormView(isMember);
         view.BackRequested += (_, _) => ShowRoleSelect();
         view.RegisterRequested += (_, _) => ShowRegister();
+        view.LoginSucceeded += (_, user) => ShowHome(user);
         Navigate(view);
+    }
+
+    private void ShowHome(User user)
+    {
+        if (user.Role.RoleName != "Member")
+        {
+            var shell = new StaffShellView(user);
+            shell.LogoutRequested += (_, _) =>
+            {
+                CurrentUser.Value = null;
+                ShowRoleSelect();
+            };
+            Navigate(shell);
+            return;
+        }
+
+        // Tạm thời: Member chưa có khung riêng.
+        Navigate(new UserControl
+        {
+            Content = new TextBlock
+            {
+                Text = $"Xin chào, {user.FullName} ({user.Role.RoleName})",
+                FontSize = 24,
+                HorizontalAlignment = HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Center
+            }
+        });
     }
 
     private void ShowRegister()
