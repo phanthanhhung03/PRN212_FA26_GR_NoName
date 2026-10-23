@@ -14,6 +14,7 @@ namespace SportCenter.Views
     {
         private readonly ClassService _service = new ClassService();
         private readonly int _classId;
+        private bool _busy;                    // đang xử lý một thao tác (đổi, hủy, xếp buổi bù): chặn bấm chồng
 
         // Nối trang do bên ngoài (StaffShellView) đăng ký.
         public event EventHandler? BackRequested;
@@ -66,6 +67,10 @@ namespace SportCenter.Views
             InfoCard.Visibility = Visibility.Visible;
 
             // Buổi sắp tới gần nhất: buổi chưa học, chưa hủy, từ hôm nay trở đi.
+            int missing = detail.TotalSessions - sessions.Count(s => s.Status != "Cancelled");
+            MakeupButton.Content = $"Xếp buổi bù (thiếu {missing})";
+            MakeupButton.Visibility = missing > 0 && detail.Status is not ("Cancelled" or "Completed") ? Visibility.Visible : Visibility.Collapsed;
+
             DateOnly today = DateOnly.FromDateTime(DateTime.Today);
             int? nextId = sessions
                 .Where(s => s.Status == "Scheduled" && s.SessionDate >= today)
@@ -87,13 +92,77 @@ namespace SportCenter.Views
         // Bấm "Đổi" ở một buổi: mở hộp thoại đổi coach/phòng, lưu xong thì tải lại bảng.
         private async void Reassign_Click(object sender, RoutedEventArgs e)
         {
-            if (sender is not FrameworkElement { DataContext: SessionRow row }) return;
+            if (_busy || sender is not FrameworkElement { DataContext: SessionRow row }) return;
 
-            var dialog = new ReassignSessionDialog(row.SessionId) { Owner = Window.GetWindow(this) };
-            if (dialog.ShowDialog() == true)
+            _busy = true;
+            try
             {
+                var dialog = new ReassignSessionDialog(row.SessionId) { Owner = Window.GetWindow(this) };
+                if (dialog.ShowDialog() == true)
+                {
+                    await LoadAsync();
+                    Notice.Show($"Đã đổi buổi {row.SessionNo}.");
+                }
+            }
+            finally
+            {
+                _busy = false;
+            }
+        }
+
+        // Bấm "Hủy" ở một buổi: xác nhận, hủy, rồi báo kết quả (có buổi bù tự động hay chưa).
+        private async void Cancel_Click(object sender, RoutedEventArgs e)
+        {
+            if (_busy || sender is not FrameworkElement { DataContext: SessionRow row }) return;
+
+            bool confirmed = ConfirmDialog.Ask(Window.GetWindow(this), "Hủy buổi học",
+                $"Hủy buổi {row.SessionNo} ({row.DateText}, {row.TimeText})?\n\n" +
+                "Hệ thống sẽ thử xếp buổi bù vào cuối lịch với coach và phòng gốc của lớp. " +
+                "Nếu không xếp được, bạn có thể xếp buổi bù thủ công sau.",
+                "Hủy buổi");
+            if (!confirmed) return;
+
+            _busy = true;
+            try
+            {
+                CancelSessionResultDto result = await _service.CancelSessionAsync(row.SessionId);
                 await LoadAsync();
-                Notice.Show($"Đã đổi buổi {row.SessionNo}.");
+                Notice.Show(result.MakeupSessionNo is int no
+                    ? $"Đã hủy buổi {row.SessionNo}. Buổi bù: buổi {no}, Thứ {result.MakeupDayOfWeek}, {result.MakeupDate:dd/MM/yyyy}."
+                    : $"Đã hủy buổi {row.SessionNo}. Chưa xếp được buổi bù tự động, hãy bấm “Xếp buổi bù”.");
+            }
+            catch (Exception ex)
+            {
+                await LoadAsync();                                   // trạng thái buổi có thể đã đổi: tải lại rồi báo lỗi
+                ShowError(ex is InvalidOperationException or UnauthorizedAccessException
+                    ? ex.Message
+                    : "Không hủy được buổi học. Vui lòng thử lại.");
+            }
+            finally
+            {
+                _busy = false;
+            }
+        }
+
+        // Bấm "Xếp buổi bù": mở hộp thoại chọn ngày, khung giờ, coach, phòng.
+        private async void Makeup_Click(object sender, RoutedEventArgs e)
+        {
+            if (_busy) return;
+
+            _busy = true;
+            try
+            {
+                var dialog = new AddMakeupSessionDialog(_classId) { Owner = Window.GetWindow(this) };
+                bool saved = dialog.ShowDialog() == true;
+                await LoadAsync();                                   // luôn tải lại: lớp có thể đã đủ buổi trong lúc mở hộp thoại
+                if (saved)
+                {
+                    Notice.Show(dialog.CreatedSessionNo > 0 ? $"Đã xếp buổi bù: buổi {dialog.CreatedSessionNo}." : "Đã xếp buổi bù.");
+                }
+            }
+            finally
+            {
+                _busy = false;
             }
         }
 

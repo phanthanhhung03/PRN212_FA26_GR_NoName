@@ -81,6 +81,9 @@
                     <TextBlock x:Name="StatusBadgeText" FontSize="12" FontWeight="SemiBold"
                                Foreground="{StaticResource PrimaryDarkBrush}"/>
                 </Border>
+                <!-- Hiện khi lớp đang thiếu buổi (vd. sau khi hủy mà chưa xếp được buổi bù tự động) -->
+                <Button x:Name="MakeupButton" Visibility="Collapsed" Margin="14,0,0,0" Width="190" Height="34" FontSize="13"
+                        Style="{StaticResource SecondaryButton}" VerticalAlignment="Center" Click="Makeup_Click"/>
             </StackPanel>
             <TextBlock x:Name="ErrorText" Foreground="{StaticResource ErrorBrush}" FontSize="13"
                        Visibility="Collapsed" Margin="0,8,0,0" TextWrapping="Wrap"/>
@@ -125,12 +128,16 @@
             <DataGrid.Columns>
                 <DataGridTextColumn Header="Buổi"      Binding="{Binding SessionNo}"  Width="65" MinWidth="65"  ElementStyle="{StaticResource CenterCellText}"/>
                 <!-- Chỉ buổi chưa bắt đầu mới có nút sửa -->
-                <DataGridTemplateColumn Header="" Width="70" MinWidth="70">
+                <DataGridTemplateColumn Header="" Width="100" MinWidth="100">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
-                            <Button Content="Đổi" Style="{StaticResource LinkButton}" FontWeight="SemiBold"
-                                    HorizontalAlignment="Left" Click="Reassign_Click"
-                                    Visibility="{Binding CanEdit, Converter={StaticResource BoolToVisibility}}"/>
+                            <StackPanel Orientation="Horizontal"
+                                        Visibility="{Binding CanEdit, Converter={StaticResource BoolToVisibility}}">
+                                <Button Content="Đổi" Style="{StaticResource LinkButton}" FontWeight="SemiBold"
+                                        Click="Reassign_Click"/>
+                                <Button Content="Hủy" Style="{StaticResource LinkButton}" FontWeight="SemiBold"
+                                        Foreground="{StaticResource ErrorBrush}" Margin="14,0,0,0" Click="Cancel_Click"/>
+                            </StackPanel>
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>
