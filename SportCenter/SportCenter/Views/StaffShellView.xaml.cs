@@ -4,8 +4,10 @@ using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media.Animation;
+using SportCenter.Dtos;
 using SportCenter.Entities;
 using SportCenter.Models;
+using SportCenter.Views;
 
 namespace SportCenter.Views;
 
@@ -19,7 +21,7 @@ public partial class StaffShellView : UserControl
     // Thứ tự trong danh sách chính là thứ tự trên sidebar.
     private static readonly List<NavItem> AllItems = new()
     {
-        new NavItem("Lớp học",            new[] { Manager }, () => new PlaceholderPage("Lớp học", "UC12 · UC13")),
+        new NavItem("Lớp học",            new[] { Manager }, () => new ClassListPage()),
         new NavItem("Môn và khóa học",    new[] { Manager }, () => new PlaceholderPage("Môn và khóa học", "UC11")),
         new NavItem("Tài khoản",          new[] { Manager }, () => new PlaceholderPage("Tài khoản", "UC14")),
         new NavItem("Báo cáo",            new[] { Manager }, () => new PlaceholderPage("Báo cáo", "UC15")),
