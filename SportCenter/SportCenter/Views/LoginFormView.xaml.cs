@@ -67,7 +67,7 @@ public partial class LoginFormView : UserControl
         }
         finally
         {
-            ShowError("Không kết nối được máy chủ. Vui lòng thử lại.");
+            LoginButton.IsEnabled = true;
         }
 
     }
