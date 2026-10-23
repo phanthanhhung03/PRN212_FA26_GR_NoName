@@ -70,10 +70,36 @@ public partial class StaffShellView : UserControl
         PageTitleText.Text = item.Title;
 
         UserControl page = item.CreatePage();
+        if (page is ClassListPage list)
+        {
+            list.NewClassRequested += (_, _) => ShowClassForm();
+        }
+        ShowPage(page);
+    }
+
+    private void LogoutButton_Click(object sender, RoutedEventArgs e) => LogoutRequested?.Invoke(this, EventArgs.Empty);
+
+    private void ShowClassList()
+    {
+        PageTitleText.Text = "Lớp học";
+        var list = new ClassListPage();
+        list.NewClassRequested += (_, _) => ShowClassForm();
+        ShowPage(list);
+    }
+
+    private void ShowClassForm()
+    {
+        PageTitleText.Text = "Mở lớp mới";
+        var form = new CreateClassPage();
+        form.BackRequested += (_, _) => ShowClassList();
+        form.Created += (_, _) => ShowClassList();
+        ShowPage(form);
+    }
+
+    private void ShowPage(UserControl page)
+    {
         page.Opacity = 0;
         PageHost.Content = page;
         page.BeginAnimation(OpacityProperty, new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(200)));
     }
-
-    private void LogoutButton_Click(object sender, RoutedEventArgs e) => LogoutRequested?.Invoke(this, EventArgs.Empty);
 }

@@ -22,6 +22,7 @@ namespace SportCenter.Views
     {
         private readonly ClassService _service = new ClassService();
         private bool _loading;
+        public event EventHandler? NewClassRequested;
 
         public ClassListPage()
         {
@@ -86,5 +87,7 @@ namespace SportCenter.Views
                 : "Không tải được danh sách lớp. Vui lòng thử lại.";
             MessageBox.Show(message, "Lỗi", MessageBoxButton.OK, MessageBoxImage.Warning);
         }
+
+        private void NewClassButton_Click(object sender, RoutedEventArgs e) => NewClassRequested?.Invoke(this, EventArgs.Empty);
     }
 }

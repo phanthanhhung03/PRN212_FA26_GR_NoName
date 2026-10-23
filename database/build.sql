@@ -15,3 +15,5 @@
 :r 006_security.sql
 
 :r 007_seed_data.sql
+
+:r 008_busy_slots.sql
