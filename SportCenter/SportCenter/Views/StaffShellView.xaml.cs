@@ -7,6 +7,7 @@ using System.Windows.Media.Animation;
 using SportCenter.Dtos;
 using SportCenter.Entities;
 using SportCenter.Models;
+using SportCenter.Services;
 using SportCenter.Views;
 
 namespace SportCenter.Views;
@@ -28,7 +29,7 @@ public partial class StaffShellView : UserControl
         new NavItem("Ghi danh hộ",        new[] { Staff },   () => new PlaceholderPage("Ghi danh hộ", "UC10")),
         new NavItem("Lịch dạy",           new[] { Coach },   () => new PlaceholderPage("Lịch dạy và học viên", "UC08")),
         new NavItem("Điểm danh",          new[] { Coach },   () => new PlaceholderPage("Điểm danh", "UC09")),
-        new NavItem("Hồ sơ cá nhân",      new[] { Manager, Staff, Coach }, () => new PlaceholderPage("Hồ sơ cá nhân", "UC02")),
+        new NavItem("Hồ sơ cá nhân",      new[] { Manager, Staff, Coach }, () => new ProfilePage()),
     };
 
     public event EventHandler? LogoutRequested;
@@ -74,7 +75,17 @@ public partial class StaffShellView : UserControl
         {
             WireClassList(list);
         }
+        else if (page is ProfilePage profile)
+        {
+            profile.ProfileSaved += (_, _) => RefreshUserText();
+        }
         ShowPage(page);
+    }
+
+    private void RefreshUserText()
+    {
+        User user = CurrentUser.Value!;
+        RoleText.Text = $"{user.FullName} · {user.Role.RoleName}";
     }
 
     private void LogoutButton_Click(object sender, RoutedEventArgs e) => LogoutRequested?.Invoke(this, EventArgs.Empty);
