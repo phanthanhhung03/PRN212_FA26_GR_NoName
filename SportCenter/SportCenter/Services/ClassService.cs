@@ -45,6 +45,17 @@ namespace SportCenter.Services
                 .ToListAsync();
         }
 
+        // Tất cả môn kể cả đã ngừng (bộ lọc danh sách lớp: lớp của môn đã ngừng vẫn còn chạy).
+        public async Task<List<SportOptionDto>> GetAllSportsAsync()
+        {
+            RequireManager();
+            using var db = new SportCenterDbContext();
+            return await db.Sports.AsNoTracking()
+                .OrderBy(s => s.SportName)
+                .Select(s => new SportOptionDto(s.SportId, s.SportName))
+                .ToListAsync();
+        }
+
         public async Task<List<String>> GetClassStatusesAsync()
         {
             RequireManager();
@@ -399,7 +410,7 @@ namespace SportCenter.Services
             RequireManager();
             using var db = new SportCenterDbContext();
             return await db.Courses.AsNoTracking()
-                .Where(c => c.SportId == sportId && c.Status == "Active")
+                .Where(c => c.SportId == sportId && c.Status == "Active" && c.Sport.Status == "Active")
                 .OrderBy(c => c.CourseName)
                 .Select(c => new CourseOptionDto 
                 (
