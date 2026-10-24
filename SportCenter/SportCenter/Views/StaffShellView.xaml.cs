@@ -24,8 +24,8 @@ public partial class StaffShellView : UserControl
     {
         new NavItem("Lớp học",            new[] { Manager }, () => new ClassListPage()),
         new NavItem("Môn và khóa học",    new[] { Manager }, () => new CatalogPage()),
-        new NavItem("Tài khoản",          new[] { Manager }, () => new PlaceholderPage("Tài khoản", "UC14")),
-        new NavItem("Báo cáo",            new[] { Manager }, () => new PlaceholderPage("Báo cáo", "UC15")),
+        new NavItem("Tài khoản",          new[] { Manager }, () => new AccountPage()),
+        new NavItem("Báo cáo",            new[] { Manager }, () => new ReportPage()),
         new NavItem("Ghi danh hộ",        new[] { Staff },   () => new PlaceholderPage("Ghi danh hộ", "UC10")),
         new NavItem("Lịch dạy",           new[] { Coach },   () => new PlaceholderPage("Lịch dạy và học viên", "UC08")),
         new NavItem("Điểm danh",          new[] { Coach },   () => new PlaceholderPage("Điểm danh", "UC09")),

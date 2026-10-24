@@ -1,0 +1,67 @@
+<Window x:Class="SportCenter.Views.AccountDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Tài khoản" Width="480" SizeToContent="Height" ResizeMode="NoResize"
+        WindowStartupLocation="CenterOwner" ShowInTaskbar="False"
+        Background="{StaticResource BackgroundBrush}"
+        TextElement.Foreground="{StaticResource TextBrush}">
+    <Window.Resources>
+        <Style x:Key="FieldLabel" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Margin" Value="0,14,0,6"/>
+        </Style>
+    </Window.Resources>
+
+    <StackPanel Margin="24">
+        <TextBlock x:Name="TitleText" Text="Tạo tài khoản" FontSize="20" FontWeight="Bold"
+                   Foreground="{StaticResource PrimaryDarkBrush}"/>
+
+        <TextBlock Text="Họ và tên" Style="{StaticResource FieldLabel}" Margin="0,18,0,6"/>
+        <TextBox x:Name="NameBox" Style="{StaticResource InputTextBox}" MaxLength="100" TextChanged="Input_Changed"/>
+        <TextBlock x:Name="NameError" Style="{StaticResource FieldError}"/>
+
+        <TextBlock Text="Email (dùng để đăng nhập)" Style="{StaticResource FieldLabel}"/>
+        <TextBox x:Name="EmailBox" Style="{StaticResource InputTextBox}" MaxLength="100" TextChanged="Input_Changed"/>
+        <TextBlock x:Name="EmailError" Style="{StaticResource FieldError}"/>
+
+        <TextBlock Text="Số điện thoại (không bắt buộc)" Style="{StaticResource FieldLabel}"/>
+        <TextBox x:Name="PhoneBox" Style="{StaticResource InputTextBox}" MaxLength="10"
+                 PreviewKeyDown="Phone_PreviewKeyDown" PreviewTextInput="Phone_PreviewTextInput"
+                 DataObject.Pasting="Phone_Pasting" TextChanged="Input_Changed"/>
+        <TextBlock x:Name="PhoneError" Style="{StaticResource FieldError}"/>
+
+        <TextBlock Text="Vai trò" Style="{StaticResource FieldLabel}"/>
+        <ComboBox x:Name="RoleBox" SelectionChanged="Role_Changed"/>
+
+        <StackPanel x:Name="SportPanel" Visibility="Collapsed">
+            <TextBlock Text="Môn thể thao của Coach" Style="{StaticResource FieldLabel}"/>
+            <ComboBox x:Name="SportBox" DisplayMemberPath="SportName" SelectedValuePath="SportId"
+                      SelectionChanged="Sport_Changed"/>
+            <TextBlock x:Name="SportError" Style="{StaticResource FieldError}"/>
+            <TextBlock x:Name="RoleNote" Visibility="Collapsed" FontSize="12" TextWrapping="Wrap"
+                       Foreground="{StaticResource MutedTextBrush}" Margin="0,6,0,0"
+                       Text="Coach đang phụ trách lớp hoặc buổi học sắp tới nên không đổi được môn."/>
+        </StackPanel>
+
+        <StackPanel x:Name="PasswordPanel">
+            <TextBlock Text="Mật khẩu tạm" Style="{StaticResource FieldLabel}"/>
+            <TextBox x:Name="PasswordBox" Style="{StaticResource InputTextBox}" MaxLength="72" TextChanged="Input_Changed"/>
+            <TextBlock x:Name="PasswordError" Style="{StaticResource FieldError}"/>
+            <TextBlock FontSize="12" Foreground="{StaticResource MutedTextBrush}" TextWrapping="Wrap" Margin="0,6,0,0"
+                       Text="Gửi mật khẩu này cho người dùng; họ tự đổi lại ở Hồ sơ cá nhân sau khi đăng nhập."/>
+        </StackPanel>
+
+        <Border x:Name="ErrorBanner" Visibility="Collapsed" Background="{StaticResource ErrorBackgroundBrush}"
+                CornerRadius="8" Padding="12,8" Margin="0,14,0,0">
+            <TextBlock x:Name="ErrorText" Foreground="{StaticResource ErrorBrush}" FontSize="13" TextWrapping="Wrap"/>
+        </Border>
+
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,20,0,0">
+            <Button x:Name="CancelButton" Content="Hủy bỏ" IsCancel="True" Width="100" Margin="0,0,10,0"
+                    Style="{StaticResource SecondaryButton}"/>
+            <Button x:Name="SaveButton" Content="Lưu" IsDefault="True" Width="100"
+                    Style="{StaticResource PrimaryButton}" Click="Save_Click"/>
+        </StackPanel>
+    </StackPanel>
+</Window>
