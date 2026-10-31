@@ -1,0 +1,33 @@
+<UserControl x:Class="SportCenter.Views.MemberClassPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Grid Margin="24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- Bộ lọc: môn rồi khóa -->
+        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,16">
+            <ComboBox x:Name="SportFilter" Width="180" Margin="0,0,12,0"
+                      DisplayMemberPath="SportName" SelectionChanged="SportFilter_Changed"/>
+            <ComboBox x:Name="CourseFilter" Width="220"
+                      DisplayMemberPath="CourseName" SelectionChanged="CourseFilter_Changed"/>
+        </StackPanel>
+
+        <DataGrid x:Name="ClassGrid" Grid.Row="1" AutoGenerateColumns="False">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Lớp"        Binding="{Binding ClassName}"  MinWidth="130" Width="1.6*" ElementStyle="{StaticResource TrimCellText}"/>
+                <DataGridTextColumn Header="Môn"        Binding="{Binding SportName}"  MinWidth="90"  Width="*"    ElementStyle="{StaticResource TrimCellText}"/>
+                <DataGridTextColumn Header="Khóa"       Binding="{Binding CourseName}" MinWidth="120" Width="1.4*" ElementStyle="{StaticResource TrimCellText}"/>
+                <DataGridTextColumn Header="Level"      Binding="{Binding Level, TargetNullValue=—}" MinWidth="100" Width="*" ElementStyle="{StaticResource TrimCellText}"/>
+                <DataGridTextColumn Header="Coach"      Binding="{Binding CoachName, TargetNullValue='Chưa phân công'}" MinWidth="120" Width="1.2*" ElementStyle="{StaticResource TrimCellText}"/>
+                <DataGridTextColumn Header="Phòng"      Binding="{Binding RoomName}"   MinWidth="110" Width="1.2*" ElementStyle="{StaticResource TrimCellText}"/>
+                <DataGridTextColumn Header="Khai giảng" Binding="{Binding StartDate, StringFormat=dd/MM/yyyy}" Width="105" MinWidth="105"/>
+                <DataGridTextColumn Header="Giờ học"    Binding="{Binding ScheduleText}" MinWidth="160" Width="2*" ElementStyle="{StaticResource TrimCellText}"/>
+                <DataGridTextColumn Header="Còn chỗ"    Binding="{Binding SeatsLeft}"  Width="80" MinWidth="80" ElementStyle="{StaticResource CenterCellText}"/>
+                <DataGridTextColumn Header="Học phí"    Binding="{Binding TuitionFee, StringFormat='{}{0:N0} ₫', ConverterCulture=vi-VN}" Width="120" MinWidth="120"/>
+            </DataGrid.Columns>
+        </DataGrid>
+    </Grid>
+</UserControl>

@@ -26,7 +26,29 @@ namespace SportCenter.Services
                         .ToList()))
                 .ToListAsync();
         }
+        public async Task<List<MemberClassDto>> GetOpenClassesAsync(int? sportId, int? courseId)
+        {
+            RequireMember();
+            using var db = new SportCenterDbContext();
 
+            var query = db.Classes.AsNoTracking().Where(c => c.Status == "Enrolling");
+            if (sportId is not null) query = query.Where(c => c.Course.SportId == sportId);
+            if (courseId is not null) query = query.Where(c => c.CourseId == courseId);
+
+            return await query
+                .OrderBy(c => c.StartDate)
+                .Select(c => new MemberClassDto(
+                    c.ClassId, c.ClassName, c.Course.Sport.SportName, c.Course.CourseName, c.Course.Level,
+                    c.Coach != null ? c.Coach.FullName : null,
+                    c.Room.RoomName, c.StartDate,
+                    c.MaxCapacity,
+                    c.ClassMembers.Count(m => m.Status == "Active"),
+                    c.Course.TuitionFee,
+                    c.TimeSlots.OrderBy(t => t.DayOfWeek).ThenBy(t => t.StartTime)
+                        .Select(t => t.SlotName).ToList()))
+                .ToListAsync();
+        }
+        
         private static void RequireMember()
         {
             if (CurrentUser.Value?.Role.RoleName != "Member")

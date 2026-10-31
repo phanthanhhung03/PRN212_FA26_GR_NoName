@@ -13,8 +13,8 @@ public partial class MemberShellView : UserControl
     private static readonly List<NavItem> Items = new()
     {
         new NavItem("Môn và khóa học", new[] { "Member" }, () => new MemberCatalogPage()),
-        new NavItem("Lớp tuyển sinh",      new[] { "Member" }, () => new PlaceholderPage("Lớp tuyển sinh", "")),
-        new NavItem("Lịch học của tôi",    new[] { "Member" }, () => new PlaceholderPage("Lịch học của tôi", "")),
+        new NavItem("Lớp tuyển sinh",      new[] { "Member" }, () => new MemberClassPage()),
+        new NavItem("Lịch học của tôi",    new[] { "Member" }, () => new MemberSchedulePage()),
         new NavItem("Hồ sơ cá nhân",       new[] { "Member" }, () => new PlaceholderPage("Hồ sơ cá nhân", "")),
     };
 

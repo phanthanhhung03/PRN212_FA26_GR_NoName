@@ -1,0 +1,25 @@
+<UserControl x:Class="SportCenter.Views.MemberSchedulePage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Grid Margin="24">
+        <DataGrid x:Name="SessionGrid" AutoGenerateColumns="False">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Ngày"       Binding="{Binding SessionDate, StringFormat=dd/MM/yyyy}" Width="105" MinWidth="105"/>
+                <DataGridTextColumn Header="Giờ"        Binding="{Binding TimeText}"    Width="110" MinWidth="110"/>
+                <DataGridTextColumn Header="Lớp"        Binding="{Binding ClassName}"   MinWidth="130" Width="1.6*" ElementStyle="{StaticResource TrimCellText}"/>
+                <DataGridTextColumn Header="Buổi"       Binding="{Binding SessionNo}"   Width="60" MinWidth="60" ElementStyle="{StaticResource CenterCellText}"/>
+                <DataGridTextColumn Header="Phòng"      Binding="{Binding RoomName}"    MinWidth="110" Width="1.2*" ElementStyle="{StaticResource TrimCellText}"/>
+                <DataGridTextColumn Header="Coach"      Binding="{Binding CoachName}"   MinWidth="120" Width="1.2*" ElementStyle="{StaticResource TrimCellText}"/>
+                <DataGridTextColumn Header="Trạng thái" Binding="{Binding SessionStatusText}" Width="110" MinWidth="110"/>
+                <DataGridTextColumn Header="Điểm danh"  Binding="{Binding AttendanceText}"   Width="120" MinWidth="120"/>
+                <DataGridTextColumn Header="Ghi chú"    Binding="{Binding Remarks}"     MinWidth="120" Width="*" ElementStyle="{StaticResource TrimCellText}"/>
+            </DataGrid.Columns>
+        </DataGrid>
+
+        <!-- Hiện khi học viên chưa đăng ký lớp nào -->
+        <TextBlock x:Name="EmptyText" Visibility="Collapsed" TextWrapping="Wrap" TextAlignment="Center"
+                   Text="Bạn chưa có buổi học nào. Lịch sẽ hiện sau khi bạn đăng ký lớp và thanh toán."
+                   HorizontalAlignment="Center" VerticalAlignment="Center"
+                   Foreground="{StaticResource MutedTextBrush}"/>
+    </Grid>
+</UserControl>
