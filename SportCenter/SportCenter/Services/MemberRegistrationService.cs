@@ -1,7 +1,6 @@
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using SportCenter.Entities;
-using System.Text;
 
 namespace SportCenter.Services
 {
@@ -24,10 +23,7 @@ namespace SportCenter.Services
             if (!ProfileService.IsValidPhone(phone)) throw new InvalidOperationException("Số điện thoại gồm 10 số và bắt đầu bằng 0.");
             if (!Genders.Contains(gender)) throw new InvalidOperationException("Giới tính không hợp lệ.");
             ValidateBirthDate(birthDate);
-            if (password.Length < ProfileService.MinPasswordLength)
-                throw new InvalidOperationException($"Mật khẩu tối thiểu {ProfileService.MinPasswordLength} ký tự.");
-            if (Encoding.UTF8.GetByteCount(password) > ProfileService.MaxPasswordBytes)
-                throw new InvalidOperationException("Mật khẩu quá dài.");
+            AuthService.ValidatePassword(password);
 
             using var db = new SportCenterDbContext();
             if (await db.Users.AnyAsync(u => u.Email == email))

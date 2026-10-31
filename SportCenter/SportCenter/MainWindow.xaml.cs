@@ -29,6 +29,7 @@ public partial class MainWindow : Window
         var view = new LoginFormView(isMember);
         view.BackRequested += (_, _) => ShowRoleSelect();
         view.RegisterRequested += (_, _) => ShowRegister();
+        view.ForgotPasswordRequested += (_, _) => ShowForgotPassword(isMember);
         view.LoginSucceeded += (_, user) => ShowHome(user);
         Navigate(view);
     }
@@ -60,6 +61,13 @@ public partial class MainWindow : Window
     {
         var view = new RegisterView();
         view.BackRequested += (_, _) => ShowLogin(isMember: true);
+        Navigate(view);
+    }
+
+    private void ShowForgotPassword(bool isMember)
+    {
+        var view = new ForgotPasswordView();
+        view.BackRequested += (_, _) => ShowLogin(isMember);
         Navigate(view);
     }
 
