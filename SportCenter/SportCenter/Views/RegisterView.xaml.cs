@@ -4,6 +4,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Threading;
+using SportCenter.Services;
 
 namespace SportCenter.Views;
 
@@ -14,6 +15,7 @@ public partial class RegisterView : UserControl
     private static readonly Regex EmailRegex = new(@"^[^@\s]+@[^@\s]+\.[^@\s]+$", RegexOptions.Compiled);
     private static readonly Regex PhoneRegex = new(@"^0\d{9}$", RegexOptions.Compiled);
 
+    private readonly MemberRegistrationService _service = new();
     private bool _syncingPassword;
 
     // Quay lại form đăng nhập Member (bấm Quay lại / Đăng nhập, hoặc sau khi đăng ký xong).
@@ -28,8 +30,7 @@ public partial class RegisterView : UserControl
 
     private void BackButton_Click(object sender, RoutedEventArgs e) => BackRequested?.Invoke(this, EventArgs.Empty);
 
-    // UI mẫu: kiểm tra hợp lệ rồi báo thành công, chưa lưu dữ liệu.
-    private void RegisterButton_Click(object sender, RoutedEventArgs e)
+    private async void RegisterButton_Click(object sender, RoutedEventArgs e)
     {
         // Gọi hết (không dùng &&) để hiện lỗi của mọi ô cùng lúc.
         bool valid = true;
@@ -38,11 +39,34 @@ public partial class RegisterView : UserControl
         valid &= ValidateBirthDate();
         valid &= ValidateGender();
         valid &= ValidateEmail();
-        valid &= ValidateUsername();
         valid &= ValidatePassword();
         valid &= ValidateConfirm();
 
         if (!valid) return;
+
+        RegisterButton.IsEnabled = false;             // chặn bấm hai lần trong lúc đang lưu
+        FormError.Visibility = Visibility.Collapsed;
+        try
+        {
+            string gender = MaleRadio.IsChecked == true ? "Male" : FemaleRadio.IsChecked == true ? "Female" : "Other";
+            await _service.RegisterAsync(
+                FullNameBox.Text, EmailBox.Text, PhoneBox.Text,
+                DateOnly.FromDateTime(BirthDatePicker.SelectedDate!.Value), gender, PasswordBox.Password);
+        }
+        catch (InvalidOperationException ex)
+        {
+            ShowFormError(ex.Message);
+            return;
+        }
+        catch
+        {
+            ShowFormError("Không kết nối được máy chủ. Vui lòng thử lại.");
+            return;
+        }
+        finally
+        {
+            RegisterButton.IsEnabled = true;
+        }
 
         SuccessBanner.Visibility = Visibility.Visible;
         var timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1.2) };
@@ -52,6 +76,12 @@ public partial class RegisterView : UserControl
             BackRequested?.Invoke(this, EventArgs.Empty);
         };
         timer.Start();
+    }
+
+    private void ShowFormError(string message)
+    {
+        FormError.Text = message;
+        FormError.Visibility = Visibility.Visible;
     }
 
     // ---- Validation: mỗi hàm trả true nếu hợp lệ và cập nhật lỗi dưới ô ----
@@ -94,15 +124,6 @@ public partial class RegisterView : UserControl
             : !EmailRegex.IsMatch(email) ? "Email không đúng định dạng."
             : null;
         return SetError(EmailError, EmailBox, error);
-    }
-
-    private bool ValidateUsername()
-    {
-        string username = UsernameBox.Text.Trim();
-        string? error = username.Length == 0 ? "Vui lòng nhập tên đăng nhập."
-            : username.Length < 4 ? "Tên đăng nhập tối thiểu 4 ký tự."
-            : null;
-        return SetError(UsernameError, UsernameBox, error);
     }
 
     private bool ValidatePassword()
@@ -150,7 +171,6 @@ public partial class RegisterView : UserControl
     private void FullName_LostFocus(object sender, RoutedEventArgs e) => ValidateFullName();
     private void Phone_LostFocus(object sender, RoutedEventArgs e) => ValidatePhone();
     private void Email_LostFocus(object sender, RoutedEventArgs e) => ValidateEmail();
-    private void Username_LostFocus(object sender, RoutedEventArgs e) => ValidateUsername();
     private void Confirm_LostFocus(object sender, RoutedEventArgs e) => ValidateConfirm();
 
     private void Password_LostFocus(object sender, RoutedEventArgs e)
