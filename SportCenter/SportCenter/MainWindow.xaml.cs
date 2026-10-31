@@ -47,17 +47,13 @@ public partial class MainWindow : Window
             return;
         }
 
-        // Tạm thời: Member chưa có khung riêng.
-        Navigate(new UserControl
+        var memberShell = new MemberShellView(user);
+        memberShell.LogoutRequested += (_, _) =>
         {
-            Content = new TextBlock
-            {
-                Text = $"Xin chào, {user.FullName} ({user.Role.RoleName})",
-                FontSize = 24,
-                HorizontalAlignment = HorizontalAlignment.Center,
-                VerticalAlignment = VerticalAlignment.Center
-            }
-        });
+            CurrentUser.Value = null;
+            ShowRoleSelect();
+        };
+        Navigate(memberShell);
     }
 
     private void ShowRegister()
