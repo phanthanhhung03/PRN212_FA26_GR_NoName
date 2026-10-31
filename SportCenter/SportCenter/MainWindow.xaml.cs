@@ -29,6 +29,7 @@ public partial class MainWindow : Window
         var view = new LoginFormView(isMember);
         view.BackRequested += (_, _) => ShowRoleSelect();
         view.RegisterRequested += (_, _) => ShowRegister();
+        view.ForgotPasswordRequested += (_, _) => ShowForgotPassword(isMember);
         view.LoginSucceeded += (_, user) => ShowHome(user);
         Navigate(view);
     }
@@ -47,23 +48,26 @@ public partial class MainWindow : Window
             return;
         }
 
-        // Tạm thời: Member chưa có khung riêng.
-        Navigate(new UserControl
+        var memberShell = new MemberShellView(user);
+        memberShell.LogoutRequested += (_, _) =>
         {
-            Content = new TextBlock
-            {
-                Text = $"Xin chào, {user.FullName} ({user.Role.RoleName})",
-                FontSize = 24,
-                HorizontalAlignment = HorizontalAlignment.Center,
-                VerticalAlignment = VerticalAlignment.Center
-            }
-        });
+            CurrentUser.Value = null;
+            ShowRoleSelect();
+        };
+        Navigate(memberShell);
     }
 
     private void ShowRegister()
     {
         var view = new RegisterView();
         view.BackRequested += (_, _) => ShowLogin(isMember: true);
+        Navigate(view);
+    }
+
+    private void ShowForgotPassword(bool isMember)
+    {
+        var view = new ForgotPasswordView();
+        view.BackRequested += (_, _) => ShowLogin(isMember);
         Navigate(view);
     }
 

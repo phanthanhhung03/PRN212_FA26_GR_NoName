@@ -12,6 +12,7 @@ public partial class LoginFormView : UserControl
 
     public event EventHandler? BackRequested;
     public event EventHandler? RegisterRequested;
+    public event EventHandler? ForgotPasswordRequested;
 
     private readonly bool _isMember;
     public event EventHandler<User>? LoginSucceeded;
@@ -72,10 +73,7 @@ public partial class LoginFormView : UserControl
 
     }
 
-    private void ForgotPassword_Click(object sender, RoutedEventArgs e)
-    {
-        // Chưa có màn Quên mật khẩu (UC17).
-    }
+    private void ForgotPassword_Click(object sender, RoutedEventArgs e) => ForgotPasswordRequested?.Invoke(this, EventArgs.Empty);
 
     private void Register_Click(object sender, RoutedEventArgs e) => RegisterRequested?.Invoke(this, EventArgs.Empty);
 

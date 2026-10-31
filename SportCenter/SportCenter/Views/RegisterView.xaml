@@ -19,7 +19,7 @@
 
                     <Border x:Name="SuccessBanner" Visibility="Collapsed" Background="{StaticResource PrimaryLightBrush}"
                             CornerRadius="8" Padding="12,8" Margin="0,0,0,14">
-                        <TextBlock Text="Đăng ký thành công (demo). Đang chuyển về đăng nhập..."
+                        <TextBlock Text="Đăng ký thành công. Đang chuyển về đăng nhập..."
                                    Foreground="{StaticResource PrimaryDarkBrush}" FontSize="13"/>
                     </Border>
 
@@ -75,20 +75,12 @@
                             <TextBlock x:Name="GenderError" Style="{StaticResource FieldError}"/>
                         </StackPanel>
 
-                        <!-- Email -->
-                        <StackPanel Grid.Row="2" Grid.Column="0" Margin="0,0,0,14">
-                            <TextBlock Text="Email" FontSize="13" FontWeight="SemiBold" Margin="0,0,0,6"/>
+                        <!-- Email (dùng để đăng nhập) -->
+                        <StackPanel Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="3" Margin="0,0,0,14">
+                            <TextBlock Text="Email (dùng để đăng nhập)" FontSize="13" FontWeight="SemiBold" Margin="0,0,0,6"/>
                             <TextBox x:Name="EmailBox" Style="{StaticResource InputTextBox}"
                                      VerticalContentAlignment="Center" LostFocus="Email_LostFocus"/>
                             <TextBlock x:Name="EmailError" Style="{StaticResource FieldError}"/>
-                        </StackPanel>
-
-                        <!-- Username -->
-                        <StackPanel Grid.Row="2" Grid.Column="2" Margin="0,0,0,14">
-                            <TextBlock Text="Tên đăng nhập" FontSize="13" FontWeight="SemiBold" Margin="0,0,0,6"/>
-                            <TextBox x:Name="UsernameBox" Style="{StaticResource InputTextBox}"
-                                     VerticalContentAlignment="Center" LostFocus="Username_LostFocus"/>
-                            <TextBlock x:Name="UsernameError" Style="{StaticResource FieldError}"/>
                         </StackPanel>
 
                         <!-- Mật khẩu -->
@@ -117,8 +109,11 @@
                         </StackPanel>
                     </Grid>
 
-                    <Button Content="Đăng ký" Style="{StaticResource PrimaryButton}" IsDefault="True"
-                            Margin="0,24,0,0" Click="RegisterButton_Click"/>
+                    <TextBlock x:Name="FormError" Style="{StaticResource FieldError}" Margin="0,14,0,0"
+                               TextWrapping="Wrap"/>
+
+                    <Button x:Name="RegisterButton" Content="Đăng ký" Style="{StaticResource PrimaryButton}" IsDefault="True"
+                            Margin="0,12,0,0" Click="RegisterButton_Click"/>
 
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,18,0,0">
                         <TextBlock Text="Đã có tài khoản? " FontSize="13" Foreground="{StaticResource MutedTextBrush}"/>
