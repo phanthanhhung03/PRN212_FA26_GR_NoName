@@ -78,3 +78,4 @@ namespace SportCenter.Dtos
         string Status,
         string? Remarks);
 }
+

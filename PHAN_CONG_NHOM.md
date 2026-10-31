@@ -21,7 +21,7 @@ Cập nhật: 2026-10-23 · 17 UC (15 UC gốc + UC16 đăng ký Member + UC17 q
 | Hưng | Quản lý lớp, DB | UC12, UC13, UC15 | Nặng nhất: lọc dần môn → khóa → khung giờ → coach rảnh → phòng hợp lệ → `sp_create_class`. UC15 đọc `session`, `attendance` |
 | TV1 | Khu vực Member (xem) | UC03, UC04, UC07, UC16, UC17 | Làm `MemberShellView` trước. Chủ yếu đọc dữ liệu |
 | TV2 | Ghi danh, thanh toán | UC05, UC06, UC10 | Khó nhất: SYS01 (không vượt sĩ số), SYS02 (không trùng lớp), Pending, QR. UC10 dùng chung logic ghi danh với UC05 |
-| TV3 | Coach và quản trị | UC08, UC09, UC11, UC14, UC02 | UC02 (hồ sơ cá nhân) dùng chung mọi role, hợp với UC14 |
+| TV3 | Coach và quản trị | UC08, UC09, UC11, UC14, UC02 | Đã hoàn thiện mã nguồn trên nhánh tv3. Xem chi tiết tại [KICH_BAN_TEST_TV3.md](KICH_BAN_TEST_TV3.md) |
 
 ## 3. Việc cần chốt trước khi bắt đầu
 
