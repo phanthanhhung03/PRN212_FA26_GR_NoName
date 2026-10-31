@@ -19,7 +19,8 @@ SET NOCOUNT ON;
 -- failure aborts the batch and sqlcmd -b stops with the error.
 -- =====================================================
 
-DECLARE @hash VARCHAR(255) = '$2a$11$SampleFakeHashNotARealPasswordSampleFakeHashNotARealP';
+-- Default password for all seed accounts is: 123456
+DECLARE @hash VARCHAR(255) = '$2a$11$GD2R/Elq7KExXjGQvFy1hOqEV3QMdQ5fSyuqfJZUweiGKyNs./Vp6';
 DECLARE @mgr INT, @r_mgr INT = (SELECT role_id FROM [role] WHERE role_name = N'Manager');
 
 -- 1. Manager (inserted directly: no one exists yet to create it)

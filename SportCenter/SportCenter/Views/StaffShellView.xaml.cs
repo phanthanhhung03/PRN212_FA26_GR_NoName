@@ -27,8 +27,8 @@ public partial class StaffShellView : UserControl
         new NavItem("Tài khoản",          new[] { Manager }, () => new AccountPage()),
         new NavItem("Báo cáo",            new[] { Manager }, () => new ReportPage()),
         new NavItem("Ghi danh hộ",        new[] { Staff },   () => new PlaceholderPage("Ghi danh hộ", "UC10")),
-        new NavItem("Lịch dạy",           new[] { Coach },   () => new PlaceholderPage("Lịch dạy và học viên", "UC08")),
-        new NavItem("Điểm danh",          new[] { Coach },   () => new PlaceholderPage("Điểm danh", "UC09")),
+        new NavItem("Lịch dạy",           new[] { Coach },   () => new CoachSchedulePage()),
+        new NavItem("Điểm danh",          new[] { Coach },   () => new AttendancePage()),
         new NavItem("Hồ sơ cá nhân",      new[] { Manager, Staff, Coach }, () => new ProfilePage()),
     };
 
@@ -79,6 +79,35 @@ public partial class StaffShellView : UserControl
         {
             profile.ProfileSaved += (_, _) => RefreshUserText();
         }
+        else if (page is CoachSchedulePage coachSchedule)
+        {
+            WireCoachSchedule(coachSchedule);
+        }
+        else if (page is AttendancePage attendance)
+        {
+            attendance.BackRequested += (_, _) => ShowCoachSchedule();
+        }
+        ShowPage(page);
+    }
+
+    private void WireCoachSchedule(CoachSchedulePage schedule)
+    {
+        schedule.AttendanceRequested += (_, sessionId) => ShowAttendance(sessionId);
+    }
+
+    private void ShowCoachSchedule()
+    {
+        PageTitleText.Text = "Lịch dạy";
+        var page = new CoachSchedulePage();
+        WireCoachSchedule(page);
+        ShowPage(page);
+    }
+
+    private void ShowAttendance(int sessionId)
+    {
+        PageTitleText.Text = "Điểm danh";
+        var page = new AttendancePage(sessionId);
+        page.BackRequested += (_, _) => ShowCoachSchedule();
         ShowPage(page);
     }
 

@@ -1,0 +1,106 @@
+<UserControl x:Class="SportCenter.Views.CoachSchedulePage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:SportCenter.Views">
+    <Grid Margin="24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- Thông báo nhanh -->
+        <local:NoticeBar x:Name="Notice" Grid.Row="0" Margin="0,0,0,12"/>
+
+        <!-- Bộ lọc -->
+        <DockPanel Grid.Row="1" Margin="0,0,0,16">
+            <StackPanel Orientation="Horizontal" DockPanel.Dock="Left">
+                <ComboBox x:Name="ClassFilter" Width="220" Margin="0,0,12,0"
+                          DisplayMemberPath="ClassName" SelectedValuePath="ClassId"
+                          SelectionChanged="Filter_Changed"/>
+                <ComboBox x:Name="DateRangeFilter" Width="160" Margin="0,0,12,0"
+                          SelectionChanged="Filter_Changed"/>
+                <ComboBox x:Name="StatusFilter" Width="160" Margin="0,0,12,0"
+                          SelectionChanged="Filter_Changed"/>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button Content="Tải lại" Style="{StaticResource SecondaryButton}" Width="90" Click="Reload_Click"/>
+            </StackPanel>
+        </DockPanel>
+
+        <!-- Nội dung chính: 2 cột (Danh sách buổi dạy & Chi tiết/Học viên của buổi chọn) -->
+        <Grid Grid.Row="2">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="16"/>
+                <ColumnDefinition Width="380"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Bảng danh sách buổi dạy -->
+            <DataGrid x:Name="SessionsGrid" Grid.Column="0" AutoGenerateColumns="False"
+                      SelectionChanged="SessionsGrid_SelectionChanged" SelectionMode="Single">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="Ngày" Binding="{Binding SessionDate, StringFormat=dd/MM/yyyy}" Width="105" MinWidth="105"/>
+                    <DataGridTextColumn Header="Thứ" Binding="{Binding DayOfWeekDisplay}" Width="85" MinWidth="85"/>
+                    <DataGridTextColumn Header="Giờ học" Binding="{Binding TimeDisplay}" Width="110" MinWidth="110" ElementStyle="{StaticResource CenterCellText}"/>
+                    <DataGridTextColumn Header="Lớp học" Binding="{Binding ClassName}" Width="1.5*" MinWidth="120" ElementStyle="{StaticResource TrimCellText}"/>
+                    <DataGridTextColumn Header="Môn" Binding="{Binding SportName}" Width="*" MinWidth="90" ElementStyle="{StaticResource TrimCellText}"/>
+                    <DataGridTextColumn Header="Phòng" Binding="{Binding RoomName}" Width="1.2*" MinWidth="110" ElementStyle="{StaticResource TrimCellText}"/>
+                    <DataGridTextColumn Header="Tiến độ" Binding="{Binding ProgressDisplay}" Width="80" MinWidth="80" ElementStyle="{StaticResource CenterCellText}"/>
+                    <DataGridTextColumn Header="Trạng thái" Binding="{Binding Status}" Width="100" MinWidth="100"/>
+                    <DataGridTemplateColumn Header="" Width="110" MinWidth="110">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <Button Content="Điểm danh" Style="{StaticResource LinkButton}" FontWeight="SemiBold"
+                                        HorizontalAlignment="Left" Click="QuickAttendance_Click"/>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                </DataGrid.Columns>
+            </DataGrid>
+
+            <!-- Cột chi tiết buổi học & danh sách học viên -->
+            <Border Grid.Column="2" Style="{StaticResource CardStyle}" Padding="16">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Header chi tiết -->
+                    <StackPanel Grid.Row="0" Margin="0,0,0,12">
+                        <TextBlock Text="Thông tin buổi học" FontSize="16" FontWeight="SemiBold"/>
+                        <TextBlock x:Name="SelectedClassText" Text="Chọn một buổi học bên trái để xem" Foreground="{StaticResource MutedTextBrush}" Margin="0,4,0,0"/>
+                    </StackPanel>
+
+                    <!-- Tóm tắt buổi học -->
+                    <Border x:Name="DetailBox" Grid.Row="1" Background="#F1F5F9" CornerRadius="6" Padding="12" Margin="0,0,0,12" Visibility="Collapsed">
+                        <StackPanel>
+                            <TextBlock x:Name="SessionTimeInfo" FontWeight="SemiBold" FontSize="13" Margin="0,0,0,4"/>
+                            <TextBlock x:Name="SessionRoomInfo" Foreground="{StaticResource MutedTextBrush}" FontSize="12" Margin="0,0,0,4"/>
+                            <TextBlock x:Name="SessionStatusInfo" FontSize="12"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Danh sách học viên -->
+                    <DockPanel Grid.Row="2" Margin="0,0,0,12">
+                        <TextBlock DockPanel.Dock="Top" x:Name="RosterTitleText" Text="Danh sách học viên" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                        <DataGrid x:Name="MembersGrid" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Họ và tên" Binding="{Binding FullName}" Width="*" MinWidth="130" ElementStyle="{StaticResource TrimCellText}"/>
+                                <DataGridTextColumn Header="SĐT" Binding="{Binding Phone}" Width="95" MinWidth="95"/>
+                                <DataGridTextColumn Header="Điểm danh" Binding="{Binding Status}" Width="85" MinWidth="85" ElementStyle="{StaticResource CenterCellText}"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </DockPanel>
+
+                    <!-- Nút chuyển sang trang Điểm danh -->
+                    <Button x:Name="GoToAttendanceButton" Grid.Row="3" Content="Mở bảng điểm danh đầy đủ"
+                            Style="{StaticResource PrimaryButton}" Click="GoToAttendance_Click" IsEnabled="False"/>
+                </Grid>
+            </Border>
+        </Grid>
+    </Grid>
+</UserControl>

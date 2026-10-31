@@ -1,0 +1,109 @@
+<UserControl x:Class="SportCenter.Views.AttendancePage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:SportCenter.Views">
+    <Grid Margin="24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Thông báo nhanh -->
+        <local:NoticeBar x:Name="Notice" Grid.Row="0" Margin="0,0,0,12"/>
+
+        <!-- Header: Nút back & Bộ chọn buổi học -->
+        <DockPanel Grid.Row="1" Margin="0,0,0,16">
+            <Button x:Name="BackButton" DockPanel.Dock="Left" Content="← Quay lại lịch dạy"
+                    Style="{StaticResource LinkButton}" FontWeight="SemiBold" Margin="0,0,16,0"
+                    Click="BackButton_Click" Visibility="Collapsed"/>
+            <StackPanel Orientation="Horizontal" DockPanel.Dock="Right">
+                <Button Content="Tải lại" Style="{StaticResource SecondaryButton}" Width="90" Click="Reload_Click"/>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                <TextBlock Text="Chọn buổi dạy:" VerticalAlignment="Center" FontWeight="SemiBold" Margin="0,0,10,0"/>
+                <ComboBox x:Name="SessionSelector" Width="400"
+                          DisplayMemberPath="DisplayInfo" SelectedValuePath="SessionId"
+                          SelectionChanged="SessionSelector_SelectionChanged"/>
+            </StackPanel>
+        </DockPanel>
+
+        <!-- Card thông tin buổi học -->
+        <Border Grid.Row="2" Style="{StaticResource CardStyle}" Padding="16" Margin="0,0,0,16">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0">
+                    <TextBlock x:Name="ClassTitleText" Text="Thông tin lớp học" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,6"/>
+                    <WrapPanel Margin="0,0,0,4">
+                        <TextBlock x:Name="SessionTimeText" Text="Thời gian: --" Margin="0,0,24,0"/>
+                        <TextBlock x:Name="SessionRoomText" Text="Phòng tập: --" Margin="0,0,24,0"/>
+                        <TextBlock x:Name="SessionStatusText" Text="Trạng thái: --" FontWeight="SemiBold"/>
+                    </WrapPanel>
+                </StackPanel>
+
+                <!-- Tùy chọn đánh dấu hoàn thành & thao tác nhanh -->
+                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                    <CheckBox x:Name="MarkCompletedCheckBox" Content="Đánh dấu buổi học đã hoàn thành (Completed)"
+                              FontWeight="Medium" Margin="0,0,0,8"/>
+                    <StackPanel Orientation="Horizontal">
+                        <Button Content="✓ Tất cả có mặt" Style="{StaticResource SecondaryButton}"
+                                Margin="0,0,8,0" Padding="10,6" Click="MarkAllPresent_Click"/>
+                        <Button Content="✗ Tất cả vắng mặt" Style="{StaticResource SecondaryButton}"
+                                Padding="10,6" Click="MarkAllAbsent_Click"/>
+                    </StackPanel>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Bảng danh sách học viên điểm danh -->
+        <DataGrid x:Name="AttendanceGrid" Grid.Row="3" AutoGenerateColumns="False" CanUserAddRows="False" Margin="0,0,0,16">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Họ và tên" Binding="{Binding FullName}" Width="1.5*" MinWidth="130" IsReadOnly="True" ElementStyle="{StaticResource TrimCellText}"/>
+                <DataGridTextColumn Header="Email" Binding="{Binding Email}" Width="1.5*" MinWidth="140" IsReadOnly="True" ElementStyle="{StaticResource TrimCellText}"/>
+                <DataGridTextColumn Header="SĐT" Binding="{Binding Phone}" Width="105" MinWidth="105" IsReadOnly="True"/>
+                
+                <!-- Trạng thái điểm danh -->
+                <DataGridTemplateColumn Header="Trạng thái điểm danh" Width="170" MinWidth="170">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <ComboBox SelectedValue="{Binding Status, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
+                                      SelectedValuePath="Tag" Height="34" VerticalAlignment="Center">
+                                <ComboBoxItem Content="✓ Có mặt (Present)" Tag="Present"/>
+                                <ComboBoxItem Content="✗ Vắng mặt (Absent)" Tag="Absent"/>
+                                <ComboBoxItem Content="⏰ Đi muộn (Late)" Tag="Late"/>
+                                <ComboBoxItem Content="📝 Có phép (Excused)" Tag="Excused"/>
+                            </ComboBox>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+
+                <!-- Ghi chú -->
+                <DataGridTemplateColumn Header="Ghi chú" Width="2*" MinWidth="150">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBox Text="{Binding Remarks, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
+                                     Height="34" VerticalContentAlignment="Center" Padding="6,0"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+
+                <DataGridTextColumn Header="Giờ điểm danh" Binding="{Binding CheckInTime, StringFormat=HH:mm:ss dd/MM}" Width="125" MinWidth="125" IsReadOnly="True" ElementStyle="{StaticResource CenterCellText}"/>
+            </DataGrid.Columns>
+        </DataGrid>
+
+        <!-- Footer: Nút lưu điểm danh -->
+        <DockPanel Grid.Row="4">
+            <TextBlock x:Name="SummaryCountText" Text="Tổng số: 0 học viên" VerticalAlignment="Center" Foreground="{StaticResource MutedTextBrush}"/>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button x:Name="SaveButton" Content="Lưu điểm danh" Style="{StaticResource PrimaryButton}"
+                        Width="160" Click="SaveAttendance_Click"/>
+            </StackPanel>
+        </DockPanel>
+    </Grid>
+</UserControl>
