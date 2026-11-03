@@ -1,3 +1,7 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using SportCenter.Dtos;
@@ -5,12 +9,13 @@ using SportCenter.Services;
 
 namespace SportCenter.Views;
 
-// Học viên xem các lớp đang tuyển sinh, lọc theo môn và khóa.
+// UC04 & UC05: Học viên xem các lớp đang tuyển sinh và tự đăng ký lớp học.
 public partial class MemberClassPage : UserControl
 {
-    private readonly MemberCatalogService _service = new();
+    private readonly MemberCatalogService _catalogService = new();
+    private readonly EnrollmentService _enrollmentService = new();
     private List<MemberSportDto> _sports = new();
-    private bool _loading;           // đang đổ dữ liệu vào ô lọc: bỏ qua SelectionChanged
+    private bool _loading;
 
     public MemberClassPage()
     {
@@ -23,9 +28,8 @@ public partial class MemberClassPage : UserControl
         _loading = true;
         try
         {
-            _sports = await _service.GetCatalogAsync();
+            _sports = await _catalogService.GetCatalogAsync();
 
-            // Phần tử đầu là "Tất cả": Id = 0 nghĩa là không lọc.
             var sportItems = new List<MemberSportDto> { new(0, "Tất cả các môn", null, new()) };
             sportItems.AddRange(_sports);
             SportFilter.ItemsSource = sportItems;
@@ -35,7 +39,7 @@ public partial class MemberClassPage : UserControl
         }
         catch (Exception ex)
         {
-            ShowError(ex);
+            Notice.Show("Lỗi tải danh mục: " + ex.Message);
             return;
         }
         finally
@@ -46,7 +50,6 @@ public partial class MemberClassPage : UserControl
         await LoadClassesAsync();
     }
 
-    // Ô khóa chỉ liệt kê khóa của môn đang chọn (môn 0 = tất cả các khóa).
     private void FillCourseFilter(int sportId)
     {
         var courses = _sports
@@ -65,11 +68,11 @@ public partial class MemberClassPage : UserControl
 
         try
         {
-            ClassGrid.ItemsSource = await _service.GetOpenClassesAsync(sportId, courseId);
+            ClassGrid.ItemsSource = await _catalogService.GetOpenClassesAsync(sportId, courseId);
         }
         catch (Exception ex)
         {
-            ShowError(ex);
+            Notice.Show("Không tải được danh sách lớp: " + ex.Message);
         }
     }
 
@@ -77,7 +80,7 @@ public partial class MemberClassPage : UserControl
     {
         if (_loading || SportFilter.SelectedItem is not MemberSportDto sport) return;
 
-        _loading = true;                       // đổi ô khóa sẽ bắn sự kiện: chặn lại
+        _loading = true;
         FillCourseFilter(sport.SportId);
         _loading = false;
 
@@ -90,11 +93,39 @@ public partial class MemberClassPage : UserControl
         await LoadClassesAsync();
     }
 
-    private static void ShowError(Exception ex)
+    private async void Reload_Click(object sender, RoutedEventArgs e)
     {
-        string message = ex is UnauthorizedAccessException
-            ? ex.Message
-            : "Không tải được danh sách lớp. Vui lòng thử lại.";
-        MessageBox.Show(message, "Lỗi", MessageBoxButton.OK, MessageBoxImage.Warning);
+        await LoadClassesAsync();
+        Notice.Show("Đã làm mới danh sách lớp.");
+    }
+
+    private async void EnrollButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not Button { DataContext: MemberClassDto item }) return;
+
+        var confirm = MessageBox.Show(
+            $"Bạn có chắc chắn muốn đăng ký tham gia lớp:\n\n" +
+            $"• Lớp: {item.ClassName} ({item.SportName})\n" +
+            $"• Khóa: {item.CourseName}\n" +
+            $"• Khai giảng: {item.StartDate:dd/MM/yyyy}\n" +
+            $"• Giờ học: {item.ScheduleText}\n" +
+            $"• Học phí: {item.TuitionFee:N0} ₫\n\n" +
+            $"Sau khi xác nhận, thông tin lớp học sẽ xuất hiện trong lịch học của bạn.",
+            "Xác nhận đăng ký lớp học",
+            MessageBoxButton.YesNo,
+            MessageBoxImage.Question);
+
+        if (confirm != MessageBoxResult.Yes) return;
+
+        try
+        {
+            await _enrollmentService.EnrollSelfAsync(item.ClassId);
+            Notice.Show($"Đăng ký thành công lớp {item.ClassName}!");
+            await LoadClassesAsync();
+        }
+        catch (Exception ex)
+        {
+            Notice.Show("Lỗi đăng ký: " + ex.Message);
+        }
     }
 }

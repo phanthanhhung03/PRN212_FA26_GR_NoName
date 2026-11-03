@@ -1,21 +1,24 @@
-﻿using System.Windows;
+using System;
+using System.Collections.Generic;
+using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media.Animation;
 using SportCenter.Entities;
 using SportCenter.Models;
+using SportCenter.Services;
 
 namespace SportCenter.Views;
 
 // Khung dành cho học viên: sidebar bên trái, nội dung đổi theo mục được chọn.
 public partial class MemberShellView : UserControl
 {
-    // Thứ tự trong danh sách là thứ tự trên sidebar. Mục chưa làm tạm dùng PlaceholderPage.
+    // Thứ tự trong danh sách là thứ tự trên sidebar.
     private static readonly List<NavItem> Items = new()
     {
         new NavItem("Môn và khóa học", new[] { "Member" }, () => new MemberCatalogPage()),
         new NavItem("Lớp tuyển sinh",      new[] { "Member" }, () => new MemberClassPage()),
         new NavItem("Lịch học của tôi",    new[] { "Member" }, () => new MemberSchedulePage()),
-        new NavItem("Hồ sơ cá nhân",       new[] { "Member" }, () => new PlaceholderPage("Hồ sơ cá nhân", "")),
+        new NavItem("Hồ sơ cá nhân",       new[] { "Member" }, () => new ProfilePage()),
     };
 
     public event EventHandler? LogoutRequested;
@@ -51,9 +54,21 @@ public partial class MemberShellView : UserControl
         PageTitleText.Text = item.Title;
 
         UserControl page = item.CreatePage();
+        if (page is ProfilePage profile)
+        {
+            profile.ProfileSaved += (_, _) => RefreshUserText();
+        }
         page.Opacity = 0;
         PageHost.Content = page;
         page.BeginAnimation(OpacityProperty, new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(200)));
+    }
+
+    private void RefreshUserText()
+    {
+        if (CurrentUser.Value is { } user)
+        {
+            RoleText.Text = $"{user.FullName} · {user.Role.RoleName}";
+        }
     }
 
     private void LogoutButton_Click(object sender, RoutedEventArgs e) => LogoutRequested?.Invoke(this, EventArgs.Empty);
