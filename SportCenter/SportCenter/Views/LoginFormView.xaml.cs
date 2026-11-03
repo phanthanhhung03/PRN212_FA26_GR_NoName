@@ -62,9 +62,9 @@ public partial class LoginFormView : UserControl
             CurrentUser.Value = user;
             LoginSucceeded?.Invoke(this, user);
         }
-        catch
+        catch (Exception ex)
         {
-            ShowError("Không kết nối được máy chủ. Vui lòng thử lại.");
+            ShowError(ex.InnerException != null ? ex.InnerException.Message : ex.Message);
         }
         finally
         {

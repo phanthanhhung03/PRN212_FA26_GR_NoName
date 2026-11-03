@@ -107,3 +107,4 @@ dotnet run --project .\SportCenter\SportCenter\SportCenter.csproj
 1. Đăng nhập lại cổng **Học viên (Member)** với bất kỳ tài khoản học viên nào.
 2. Bấm mục **"Hồ sơ cá nhân"** trên sidebar.
 3. Màn hình thông tin hồ sơ và đổi mật khẩu hiển thị đầy đủ (đã thay thế hoàn toàn màn hình Placeholder trước đây).
+
