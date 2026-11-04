@@ -15,6 +15,7 @@ public partial class MemberClassPage : UserControl
     private readonly MemberCatalogService _catalogService = new();
     private readonly EnrollmentService _enrollmentService = new();
     private List<MemberSportDto> _sports = new();
+    private List<MemberClassDto> _rawClasses = new();
     private bool _loading;
 
     public MemberClassPage()
@@ -68,12 +69,81 @@ public partial class MemberClassPage : UserControl
 
         try
         {
-            ClassGrid.ItemsSource = await _catalogService.GetOpenClassesAsync(sportId, courseId);
+            _rawClasses = await _catalogService.GetOpenClassesAsync(sportId, courseId);
+            ApplyFilter();
         }
         catch (Exception ex)
         {
             Notice.Show("Không tải được danh sách lớp: " + ex.Message);
         }
+    }
+
+    private void ApplyFilter()
+    {
+        if (_rawClasses == null) return;
+
+        var filtered = _rawClasses.AsEnumerable();
+
+        // 1. Lọc theo từ khóa tìm kiếm
+        string keyword = SearchBox?.Text?.Trim() ?? "";
+        if (!string.IsNullOrEmpty(keyword))
+        {
+            filtered = filtered.Where(c =>
+                (c.ClassName != null && c.ClassName.Contains(keyword, StringComparison.OrdinalIgnoreCase)) ||
+                (c.SportName != null && c.SportName.Contains(keyword, StringComparison.OrdinalIgnoreCase)) ||
+                (c.CourseName != null && c.CourseName.Contains(keyword, StringComparison.OrdinalIgnoreCase)) ||
+                (c.Level != null && c.Level.Contains(keyword, StringComparison.OrdinalIgnoreCase)) ||
+                (c.CoachName != null && c.CoachName.Contains(keyword, StringComparison.OrdinalIgnoreCase)) ||
+                (c.RoomName != null && c.RoomName.Contains(keyword, StringComparison.OrdinalIgnoreCase)) ||
+                (c.ScheduleText != null && c.ScheduleText.Contains(keyword, StringComparison.OrdinalIgnoreCase)));
+        }
+
+        // 2. Lọc theo trạng thái chỗ / đăng ký
+        if (AvailabilityFilter != null)
+        {
+            filtered = AvailabilityFilter.SelectedIndex switch
+            {
+                1 => filtered.Where(c => c.SeatsLeft > 0 && !c.IsEnrolled), // Chỉ lớp còn chỗ (chưa đăng ký)
+                2 => filtered.Where(c => c.SeatsLeft == 0),                  // Lớp đã hết chỗ (SYS01)
+                3 => filtered.Where(c => c.IsEnrolled),                      // Lớp đã đăng ký
+                _ => filtered                                                // Tất cả
+            };
+        }
+
+        var resultList = filtered.ToList();
+        ClassGrid.ItemsSource = resultList;
+
+        if (ResultCountText != null)
+        {
+            ResultCountText.Text = $"Tìm thấy {resultList.Count} lớp";
+        }
+    }
+
+    private void SearchBox_TextChanged(object sender, TextChangedEventArgs e)
+    {
+        string text = SearchBox.Text;
+        if (SearchPlaceholder != null)
+        {
+            SearchPlaceholder.Visibility = string.IsNullOrEmpty(text) ? Visibility.Visible : Visibility.Collapsed;
+        }
+        if (ClearSearchBtn != null)
+        {
+            ClearSearchBtn.Visibility = string.IsNullOrEmpty(text) ? Visibility.Collapsed : Visibility.Visible;
+        }
+
+        ApplyFilter();
+    }
+
+    private void ClearSearch_Click(object sender, RoutedEventArgs e)
+    {
+        SearchBox.Text = string.Empty;
+        SearchBox.Focus();
+    }
+
+    private void AvailabilityFilter_Changed(object sender, SelectionChangedEventArgs e)
+    {
+        if (_loading) return;
+        ApplyFilter();
     }
 
     private async void SportFilter_Changed(object sender, SelectionChangedEventArgs e)
@@ -97,6 +167,19 @@ public partial class MemberClassPage : UserControl
     {
         await LoadClassesAsync();
         Notice.Show("Đã làm mới danh sách lớp.");
+    }
+
+    private async void ResetFilters_Click(object sender, RoutedEventArgs e)
+    {
+        _loading = true;
+        SearchBox.Text = string.Empty;
+        if (SportFilter.Items.Count > 0) SportFilter.SelectedIndex = 0;
+        FillCourseFilter(0);
+        if (AvailabilityFilter != null) AvailabilityFilter.SelectedIndex = 0;
+        _loading = false;
+
+        await LoadClassesAsync();
+        Notice.Show("Đã xóa bộ lọc và làm mới danh sách.");
     }
 
     private async void EnrollButton_Click(object sender, RoutedEventArgs e)

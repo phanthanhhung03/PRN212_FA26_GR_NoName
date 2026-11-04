@@ -12,18 +12,64 @@
         <!-- Thông báo nhanh -->
         <local:NoticeBar x:Name="Notice" Grid.Row="0" Margin="0,0,0,12"/>
 
-        <!-- Bộ lọc: môn rồi khóa -->
-        <DockPanel Grid.Row="1" Margin="0,0,0,16">
-            <StackPanel Orientation="Horizontal" DockPanel.Dock="Left">
-                <ComboBox x:Name="SportFilter" Width="180" Margin="0,0,12,0"
-                          DisplayMemberPath="SportName" SelectionChanged="SportFilter_Changed"/>
-                <ComboBox x:Name="CourseFilter" Width="220" Margin="0,0,12,0"
-                          DisplayMemberPath="CourseName" SelectionChanged="CourseFilter_Changed"/>
+        <!-- Thanh tìm kiếm và bộ lọc nâng cao -->
+        <Border Grid.Row="1" Background="{StaticResource SurfaceBrush}" BorderBrush="{StaticResource BorderBrush}"
+                BorderThickness="1" CornerRadius="12" Padding="16,12" Margin="0,0,0,16">
+            <StackPanel>
+                <!-- Hàng 1: Ô tìm kiếm từ khóa và Nút Làm mới -->
+                <DockPanel Margin="0,0,0,10">
+                    <StackPanel Orientation="Horizontal" DockPanel.Dock="Right" Margin="12,0,0,0">
+                        <Button Content="Làm mới" Style="{StaticResource SecondaryButton}" Height="38" Width="85" Click="Reload_Click"/>
+                    </StackPanel>
+
+                    <Grid>
+                        <TextBox x:Name="SearchBox" Style="{StaticResource InputTextBox}" Height="38" Padding="12,0,28,0"
+                                 TextChanged="SearchBox_TextChanged"/>
+                        <TextBlock x:Name="SearchPlaceholder" Text="🔍 Tìm kiếm nhanh theo tên lớp, môn, khóa, HLV, phòng..." FontSize="13" Foreground="#9CA3AF"
+                                   VerticalAlignment="Center" Margin="12,0,0,0" IsHitTestVisible="False"/>
+                        <Button x:Name="ClearSearchBtn" Content="✕" Style="{StaticResource LinkButton}" Foreground="{StaticResource MutedTextBrush}"
+                                HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,8,0" Padding="4"
+                                Visibility="Collapsed" Click="ClearSearch_Click"/>
+                    </Grid>
+                </DockPanel>
+
+                <!-- Hàng 2: Các bộ lọc ComboBox và Thống kê kết quả -->
+                <WrapPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <!-- Lọc môn -->
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,14,6">
+                        <TextBlock Text="Môn:" VerticalAlignment="Center" FontSize="13" Foreground="{StaticResource MutedTextBrush}" Margin="0,0,6,0"/>
+                        <ComboBox x:Name="SportFilter" Width="150" Height="36"
+                                  DisplayMemberPath="SportName" SelectionChanged="SportFilter_Changed"/>
+                    </StackPanel>
+
+                    <!-- Lọc khóa -->
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,14,6">
+                        <TextBlock Text="Khóa:" VerticalAlignment="Center" FontSize="13" Foreground="{StaticResource MutedTextBrush}" Margin="0,0,6,0"/>
+                        <ComboBox x:Name="CourseFilter" Width="170" Height="36"
+                                  DisplayMemberPath="CourseName" SelectionChanged="CourseFilter_Changed"/>
+                    </StackPanel>
+
+                    <!-- Lọc tình trạng chỗ -->
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,14,6">
+                        <TextBlock Text="Chỗ:" VerticalAlignment="Center" FontSize="13" Foreground="{StaticResource MutedTextBrush}" Margin="0,0,6,0"/>
+                        <ComboBox x:Name="AvailabilityFilter" Width="160" Height="36" SelectionChanged="AvailabilityFilter_Changed">
+                            <ComboBoxItem Content="Tất cả các lớp" IsSelected="True"/>
+                            <ComboBoxItem Content="Chỉ lớp còn chỗ"/>
+                            <ComboBoxItem Content="Lớp đã hết chỗ"/>
+                            <ComboBoxItem Content="Lớp đã đăng ký"/>
+                        </ComboBox>
+                    </StackPanel>
+
+                    <!-- Nút reset bộ lọc -->
+                    <Button Content="Xóa bộ lọc" Style="{StaticResource LinkButton}" FontSize="12" VerticalAlignment="Center"
+                            Margin="0,0,14,6" Click="ResetFilters_Click"/>
+
+                    <!-- Kết quả số lượng -->
+                    <TextBlock x:Name="ResultCountText" Text="Đang tải..." VerticalAlignment="Center" FontSize="12"
+                               Foreground="{StaticResource PrimaryBrush}" FontWeight="SemiBold" Margin="0,0,0,6"/>
+                </WrapPanel>
             </StackPanel>
-            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                <Button Content="Làm mới" Style="{StaticResource SecondaryButton}" Width="90" Click="Reload_Click"/>
-            </StackPanel>
-        </DockPanel>
+        </Border>
 
         <DataGrid x:Name="ClassGrid" Grid.Row="2" AutoGenerateColumns="False">
             <DataGrid.Columns>

@@ -76,16 +76,22 @@ dotnet run --project .\SportCenter\SportCenter\SportCenter.csproj
 #### 2.1. UC05 – Học viên tự đăng ký lớp học
 - **Tài khoản test:** `member3@sportcenter.local` / Pass: `123456`
 1. Đăng nhập cổng **Học viên** $\rightarrow$ Bấm vào mục **"Lớp tuyển sinh"**.
-2. **Test Case 1 (Đăng ký thành công lớp còn chỗ):**
+2. **Sử dụng Tìm kiếm & Bộ lọc nâng cao:**
+   - **Tìm kiếm từ khóa:** Nhập `CL-Beginner` hoặc `BR` hoặc tên giáo viên vào ô tìm kiếm $\rightarrow$ Bảng danh sách lập tức lọc theo thời gian thực. Bấm `✕` để xóa nhanh từ khóa.
+   - **Bộ lọc tình trạng Chỗ:**
+     - Chọn *"Chỉ lớp còn chỗ"*: Hệ thống chỉ hiển thị những lớp có thể đăng ký ngay.
+     - Chọn *"Lớp đã hết chỗ"*: Hệ thống lọc nhanh những lớp đã đầy sĩ số (SYS01).
+   - **Nút "Xóa bộ lọc":** Đưa tất cả bộ lọc và từ khóa về mặc định.
+3. **Test Case 1 (Đăng ký thành công lớp còn chỗ):**
    - Tìm lớp `CL-Beginner-K02` (hoặc `BR-Beginner-K01`).
    - Cột Thao tác hiện nút xanh **"Đăng ký ngay"** $\rightarrow$ Click vào nút.
    - Popup xác nhận hiện ra tóm tắt thông tin lớp và học phí $\rightarrow$ Bấm **Yes**.
    - **Kỳ vọng:** Thông báo màu xanh báo thành công; Số chỗ còn lại giảm đi 1; Nút chuyển thành màu xám **"Đã đăng ký"** (khóa không cho bấm tiếp).
-3. **Test Case 2 (Kiểm tra lịch học xuất hiện ngay):**
+4. **Test Case 2 (Kiểm tra lịch học xuất hiện ngay):**
    - Bấm sang mục **"Lịch học của tôi"**.
    - **Kỳ vọng:** Lịch các buổi học của lớp vừa đăng ký xuất hiện đầy đủ trong lịch với trạng thái `Scheduled`.
-4. **Test Case 3 (Chặn đăng ký khi lớp đã hết chỗ - SYS01):**
-   - Xem lớp `CL-Beginner-K01` (đã đủ 4/4 học viên).
+5. **Test Case 3 (Chặn đăng ký khi lớp đã hết chỗ - SYS01):**
+   - Chọn bộ lọc Chỗ: *"Lớp đã hết chỗ"* hoặc gõ tìm lớp `CL-Beginner-K01` (đã đủ 4/4 học viên).
    - **Kỳ vọng:** Cột Còn chỗ hiển thị `0`; Nút bấm hiển thị chữ **"Hết chỗ"** và bị khóa (Disabled).
 
 #### 2.2. UC10 – Nhân viên ghi danh hộ học viên tại quầy
@@ -181,3 +187,4 @@ dotnet run --project .\SportCenter\SportCenter\SportCenter.csproj
 3. **Tab Doanh thu:** Xem biểu đồ và bảng doanh thu theo từng môn học và khóa học.
 4. **Tab Điểm danh:** Xem thống kê tỷ lệ có mặt, đi muộn, vắng mặt của các lớp.
 5. **Xuất báo cáo PDF:** Bấm nút **"Xuất báo cáo PDF"** $\rightarrow$ Chọn nơi lưu file $\rightarrow$ Mở file PDF kiểm tra giao diện báo cáo chuyên nghiệp.
+
