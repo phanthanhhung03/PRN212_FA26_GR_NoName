@@ -65,7 +65,7 @@
                                     <TextBlock x:Name="SelectedClassTitle" FontWeight="SemiBold" FontSize="13"/>
                                     <TextBlock x:Name="SelectedClassSchedule" FontSize="12" Margin="0,3,0,0"/>
                                     <TextBlock x:Name="SelectedClassRoomCoach" FontSize="12" Foreground="{StaticResource MutedTextBrush}" Margin="0,2,0,0"/>
-                                    <TextBlock x:Name="SelectedClassFee" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource PrimaryColor}" Margin="0,4,0,0"/>
+                                    <TextBlock x:Name="SelectedClassFee" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource PrimaryBrush}" Margin="0,4,0,0"/>
                                 </StackPanel>
                             </Border>
                         </StackPanel>

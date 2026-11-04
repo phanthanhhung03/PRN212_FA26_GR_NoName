@@ -114,3 +114,4 @@ dotnet run --project .\SportCenter\SportCenter\SportCenter.csproj
   - Chọn tab **"Doanh thu"**:
     - **Kỳ vọng:** Tổng doanh thu và số lượng đơn thanh toán đã tăng lên tương ứng với các khoản học phí của các lớp bạn vừa đăng ký thành công ở UC05 và UC10.
     - Bấm nút **"Xuất PDF"** $\rightarrow$ File báo cáo PDF được tạo ra chứa đầy đủ các khoản thu vừa phát sinh.
+
