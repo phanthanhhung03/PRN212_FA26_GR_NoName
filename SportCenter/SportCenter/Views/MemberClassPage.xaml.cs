@@ -16,7 +16,7 @@ public partial class MemberClassPage : UserControl
     private readonly EnrollmentService _enrollmentService = new();
     private List<MemberSportDto> _sports = new();
     private List<MemberClassDto> _rawClasses = new();
-    private bool _loading;
+    private bool _loading = true;
 
     public MemberClassPage()
     {
@@ -37,6 +37,11 @@ public partial class MemberClassPage : UserControl
             SportFilter.SelectedIndex = 0;
 
             FillCourseFilter(0);
+
+            if (AvailabilityFilter != null)
+            {
+                AvailabilityFilter.SelectedIndex = 0;
+            }
         }
         catch (Exception ex)
         {
@@ -80,7 +85,7 @@ public partial class MemberClassPage : UserControl
 
     private void ApplyFilter()
     {
-        if (_rawClasses == null) return;
+        if (_loading || ClassGrid == null || _rawClasses == null) return;
 
         var filtered = _rawClasses.AsEnumerable();
 
@@ -121,6 +126,8 @@ public partial class MemberClassPage : UserControl
 
     private void SearchBox_TextChanged(object sender, TextChangedEventArgs e)
     {
+        if (_loading || SearchBox == null) return;
+
         string text = SearchBox.Text;
         if (SearchPlaceholder != null)
         {
@@ -142,7 +149,7 @@ public partial class MemberClassPage : UserControl
 
     private void AvailabilityFilter_Changed(object sender, SelectionChangedEventArgs e)
     {
-        if (_loading) return;
+        if (_loading || ClassGrid == null) return;
         ApplyFilter();
     }
 
