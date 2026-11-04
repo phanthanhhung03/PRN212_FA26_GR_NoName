@@ -1,8 +1,8 @@
 <Window x:Class="SportCenter.Views.NewMemberQuickDialog"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Tạo nhanh học viên mới" Height="460" Width="420"
-        WindowStartupLocation="CenterOwner" ResizeMode="NoResize"
+        Title="Tạo nhanh học viên mới" Height="560" Width="460" MinHeight="480"
+        WindowStartupLocation="CenterOwner" ResizeMode="CanResizeWithGrip"
         Background="{StaticResource BackgroundBrush}">
     <Grid Margin="24">
         <Grid.RowDefinitions>
@@ -11,53 +11,58 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
+        <!-- Header -->
         <StackPanel Grid.Row="0" Margin="0,0,0,16">
             <TextBlock Text="Đăng ký học viên tại quầy" FontSize="18" FontWeight="SemiBold"/>
-            <TextBlock Text="Mật khẩu mặc định sẽ là 123456" Foreground="{StaticResource MutedTextBrush}" FontSize="12" Margin="0,4,0,0"/>
+            <TextBlock Text="Mật khẩu khởi tạo mặc định cho học viên là 123456" Foreground="{StaticResource MutedTextBrush}" FontSize="12" Margin="0,4,0,0"/>
         </StackPanel>
 
-        <StackPanel Grid.Row="1">
-            <!-- Họ và tên -->
-            <TextBlock Text="Họ và tên *" FontWeight="Medium" Margin="0,0,0,4"/>
-            <TextBox x:Name="FullNameBox" Style="{StaticResource InputTextBox}" Margin="0,0,0,12"/>
+        <!-- Form có thanh cuộn ScrollViewer -->
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="0,0,12,0" Margin="0,0,-8,0">
+            <StackPanel>
+                <!-- Họ và tên -->
+                <TextBlock Text="Họ và tên *" FontWeight="Medium" Margin="0,0,0,4"/>
+                <TextBox x:Name="FullNameBox" Style="{StaticResource InputTextBox}" Margin="0,0,0,12"/>
 
-            <!-- Email -->
-            <TextBlock Text="Email *" FontWeight="Medium" Margin="0,0,0,4"/>
-            <TextBox x:Name="EmailBox" Style="{StaticResource InputTextBox}" Margin="0,0,0,12"/>
+                <!-- Email -->
+                <TextBlock Text="Email *" FontWeight="Medium" Margin="0,0,0,4"/>
+                <TextBox x:Name="EmailBox" Style="{StaticResource InputTextBox}" Margin="0,0,0,12"/>
 
-            <!-- Số điện thoại -->
-            <TextBlock Text="Số điện thoại *" FontWeight="Medium" Margin="0,0,0,4"/>
-            <TextBox x:Name="PhoneBox" Style="{StaticResource InputTextBox}" Margin="0,0,0,12"/>
+                <!-- Số điện thoại -->
+                <TextBlock Text="Số điện thoại *" FontWeight="Medium" Margin="0,0,0,4"/>
+                <TextBox x:Name="PhoneBox" Style="{StaticResource InputTextBox}" Margin="0,0,0,12"/>
 
-            <!-- Ngày sinh & Giới tính -->
-            <Grid Margin="0,0,0,12">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="12"/>
-                    <ColumnDefinition Width="*"/>
-                </Grid.ColumnDefinitions>
+                <!-- Ngày sinh & Giới tính -->
+                <Grid Margin="0,0,0,12">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="16"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
 
-                <StackPanel Grid.Column="0">
-                    <TextBlock Text="Ngày sinh *" FontWeight="Medium" Margin="0,0,0,4"/>
-                    <DatePicker x:Name="BirthDatePicker" Height="42"/>
-                </StackPanel>
+                    <StackPanel Grid.Column="0">
+                        <TextBlock Text="Ngày sinh *" FontWeight="Medium" Margin="0,0,0,4"/>
+                        <DatePicker x:Name="BirthDatePicker" Height="42"/>
+                    </StackPanel>
 
-                <StackPanel Grid.Column="2">
-                    <TextBlock Text="Giới tính *" FontWeight="Medium" Margin="0,0,0,4"/>
-                    <ComboBox x:Name="GenderCombo" Height="42">
-                        <ComboBoxItem Content="Nam" Tag="Male" IsSelected="True"/>
-                        <ComboBoxItem Content="Nữ" Tag="Female"/>
-                        <ComboBoxItem Content="Khác" Tag="Other"/>
-                    </ComboBox>
-                </StackPanel>
-            </Grid>
-        </StackPanel>
+                    <StackPanel Grid.Column="2">
+                        <TextBlock Text="Giới tính *" FontWeight="Medium" Margin="0,0,0,4"/>
+                        <ComboBox x:Name="GenderCombo" Height="42">
+                            <ComboBoxItem Content="Nam" Tag="Male" IsSelected="True"/>
+                            <ComboBoxItem Content="Nữ" Tag="Female"/>
+                            <ComboBoxItem Content="Khác" Tag="Other"/>
+                        </ComboBox>
+                    </StackPanel>
+                </Grid>
+            </StackPanel>
+        </ScrollViewer>
 
-        <!-- Buttons -->
-        <DockPanel Grid.Row="2" Margin="0,16,0,0">
-            <Button Content="Hủy" Style="{StaticResource SecondaryButton}" Width="90" Click="Cancel_Click"/>
-            <Button Content="Tạo học viên" Style="{StaticResource PrimaryButton}" Width="130" HorizontalAlignment="Right" Click="Save_Click"/>
-        </DockPanel>
+        <!-- Nút hành động ở chân trang -->
+        <Border Grid.Row="2" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,1,0,0" Padding="0,16,0,0">
+            <DockPanel>
+                <Button Content="Hủy" Style="{StaticResource SecondaryButton}" Width="90" Click="Cancel_Click"/>
+                <Button Content="Tạo học viên" Style="{StaticResource PrimaryButton}" Width="140" HorizontalAlignment="Right" Click="Save_Click"/>
+            </DockPanel>
+        </Border>
     </Grid>
 </Window>
-

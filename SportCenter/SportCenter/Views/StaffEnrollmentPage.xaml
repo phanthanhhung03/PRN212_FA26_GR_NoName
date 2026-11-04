@@ -8,7 +8,7 @@
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <!-- Thông báo nhanh -->
+        <!-- Thông báo nhanh ở đầu trang -->
         <local:NoticeBar x:Name="Notice" Grid.Row="0" Margin="0,0,0,12"/>
 
         <Grid Grid.Row="1">
@@ -19,76 +19,118 @@
             </Grid.ColumnDefinitions>
 
             <!-- CỘT TRÁI: FORM GHI DANH HỘ (BƯỚC 1, 2, 3) -->
-            <ScrollViewer Grid.Column="0" VerticalScrollBarVisibility="Auto">
+            <ScrollViewer Grid.Column="0" VerticalScrollBarVisibility="Auto" Padding="0,0,8,0">
                 <StackPanel>
                     <!-- BƯỚC 1: CHỌN HỌC VIÊN -->
-                    <Border Style="{StaticResource CardStyle}" Padding="16" Margin="0,0,0,16">
+                    <Border Style="{StaticResource CardStyle}" Padding="18" Margin="0,0,0,16">
                         <StackPanel>
-                            <DockPanel Margin="0,0,0,10">
-                                <TextBlock Text="1. Chọn học viên" FontSize="15" FontWeight="SemiBold" VerticalAlignment="Center"/>
-                                <Button Content="+ Tạo học viên mới" Style="{StaticResource LinkButton}"
+                            <DockPanel Margin="0,0,0,12">
+                                <TextBlock Text="1. Chọn học viên" FontSize="16" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                <Button Content="+ Tạo học viên mới" Style="{StaticResource LinkButton}" FontWeight="SemiBold"
                                         HorizontalAlignment="Right" Click="NewMember_Click"/>
                             </DockPanel>
 
-                            <!-- Ô tìm kiếm -->
-                            <TextBox x:Name="MemberSearchBox" Style="{StaticResource InputTextBox}"
-                                     Height="38" Padding="8,0" Margin="0,0,0,8"
-                                     TextChanged="MemberSearchBox_TextChanged"/>
+                            <!-- Khung tìm kiếm học viên (ẩn khi đã chọn) -->
+                            <StackPanel x:Name="SearchPanel">
+                                <TextBlock Text="Tìm kiếm theo Tên, Số điện thoại hoặc Email:" FontSize="12" Foreground="{StaticResource MutedTextBrush}" Margin="0,0,0,6"/>
+                                <TextBox x:Name="MemberSearchBox" Style="{StaticResource InputTextBox}"
+                                         Height="40" Padding="10,0" Margin="0,0,0,8"
+                                         TextChanged="MemberSearchBox_TextChanged"/>
 
-                            <!-- Danh sách kết quả tìm kiếm -->
-                            <ListBox x:Name="MemberResultsList" MaxHeight="140" Margin="0,0,0,10"
-                                     DisplayMemberPath="DisplayText" SelectedValuePath="MemberId"
-                                     SelectionChanged="MemberResultsList_SelectionChanged"/>
+                                <!-- Danh sách kết quả gợi ý -->
+                                <Border BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="8" Background="White" Margin="0,0,0,8">
+                                    <ListBox x:Name="MemberResultsList" MaxHeight="160" BorderThickness="0" Background="Transparent"
+                                             SelectionChanged="MemberResultsList_SelectionChanged" ScrollViewer.VerticalScrollBarVisibility="Auto">
+                                        <ListBox.ItemTemplate>
+                                            <DataTemplate>
+                                                <Border Padding="10,8" BorderBrush="#F1F5F9" BorderThickness="0,0,0,1">
+                                                    <StackPanel>
+                                                        <TextBlock Text="{Binding FullName}" FontWeight="SemiBold" FontSize="13" Foreground="{StaticResource TextBrush}"/>
+                                                        <StackPanel Orientation="Horizontal" Margin="0,3,0,0">
+                                                            <TextBlock Text="📞 " FontSize="11"/>
+                                                            <TextBlock Text="{Binding Phone, TargetNullValue='Chưa có SĐT'}" FontSize="12" Foreground="{StaticResource MutedTextBrush}" Margin="0,0,14,0"/>
+                                                            <TextBlock Text="✉ " FontSize="11"/>
+                                                            <TextBlock Text="{Binding Email}" FontSize="12" Foreground="{StaticResource MutedTextBrush}"/>
+                                                        </StackPanel>
+                                                    </StackPanel>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ListBox.ItemTemplate>
+                                    </ListBox>
+                                </Border>
+                            </StackPanel>
 
-                            <!-- Thông tin học viên đang chọn -->
-                            <Border x:Name="SelectedMemberBox" Background="#F1F5F9" CornerRadius="6" Padding="10" Visibility="Collapsed">
-                                <StackPanel>
-                                    <TextBlock x:Name="SelectedMemberName" FontWeight="SemiBold" FontSize="13" Foreground="{StaticResource PrimaryDarkBrush}"/>
-                                    <TextBlock x:Name="SelectedMemberContact" FontSize="12" Foreground="{StaticResource MutedTextBrush}" Margin="0,2,0,0"/>
-                                </StackPanel>
+                            <!-- Thẻ học viên đã chọn (hiển thị đẹp và có nút đổi) -->
+                            <Border x:Name="SelectedMemberBox" Background="#F0FDF4" BorderBrush="#10B981" BorderThickness="1.5" CornerRadius="8" Padding="14" Visibility="Collapsed">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <StackPanel Grid.Column="0">
+                                        <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                                            <TextBlock Text="✓ " FontWeight="Bold" Foreground="{StaticResource PrimaryDarkBrush}" FontSize="14"/>
+                                            <TextBlock x:Name="SelectedMemberName" FontWeight="Bold" FontSize="15" Foreground="{StaticResource PrimaryDarkBrush}"/>
+                                        </StackPanel>
+                                        <TextBlock x:Name="SelectedMemberContact" FontSize="12.5" Foreground="{StaticResource TextBrush}" Margin="0,2,0,0"/>
+                                    </StackPanel>
+
+                                    <Button Grid.Column="1" Content="✕ Đổi học viên" Style="{StaticResource LinkButton}"
+                                            Foreground="{StaticResource PrimaryDarkBrush}" FontWeight="SemiBold" VerticalAlignment="Center"
+                                            Click="ChangeMember_Click"/>
+                                </Grid>
                             </Border>
                         </StackPanel>
                     </Border>
 
                     <!-- BƯỚC 2: CHỌN LỚP HỌC -->
-                    <Border Style="{StaticResource CardStyle}" Padding="16" Margin="0,0,0,16">
+                    <Border Style="{StaticResource CardStyle}" Padding="18" Margin="0,0,0,16">
                         <StackPanel>
-                            <TextBlock Text="2. Chọn lớp học" FontSize="15" FontWeight="SemiBold" Margin="0,0,0,10"/>
+                            <TextBlock Text="2. Chọn lớp học" FontSize="16" FontWeight="SemiBold" Margin="0,0,0,10"/>
 
                             <ComboBox x:Name="ClassSelector" Margin="0,0,0,10"
                                       DisplayMemberPath="DisplayText" SelectedValuePath="ClassId"
                                       SelectionChanged="ClassSelector_SelectionChanged"/>
 
                             <!-- Chi tiết lớp được chọn -->
-                            <Border x:Name="SelectedClassBox" Background="#F1F5F9" CornerRadius="6" Padding="10" Visibility="Collapsed">
+                            <Border x:Name="SelectedClassBox" Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="8" Padding="12" Visibility="Collapsed">
                                 <StackPanel>
-                                    <TextBlock x:Name="SelectedClassTitle" FontWeight="SemiBold" FontSize="13"/>
-                                    <TextBlock x:Name="SelectedClassSchedule" FontSize="12" Margin="0,3,0,0"/>
-                                    <TextBlock x:Name="SelectedClassRoomCoach" FontSize="12" Foreground="{StaticResource MutedTextBrush}" Margin="0,2,0,0"/>
-                                    <TextBlock x:Name="SelectedClassFee" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource PrimaryBrush}" Margin="0,4,0,0"/>
+                                    <TextBlock x:Name="SelectedClassTitle" FontWeight="SemiBold" FontSize="13.5"/>
+                                    <TextBlock x:Name="SelectedClassSchedule" FontSize="12.5" Margin="0,4,0,0"/>
+                                    <TextBlock x:Name="SelectedClassRoomCoach" FontSize="12" Foreground="{StaticResource MutedTextBrush}" Margin="0,3,0,0"/>
+                                    <TextBlock x:Name="SelectedClassFee" FontSize="14" FontWeight="Bold" Foreground="{StaticResource PrimaryBrush}" Margin="0,6,0,0"/>
                                 </StackPanel>
                             </Border>
                         </StackPanel>
                     </Border>
 
                     <!-- BƯỚC 3: XÁC NHẬN & THU HỌC PHÍ -->
-                    <Border Style="{StaticResource CardStyle}" Padding="16">
+                    <Border Style="{StaticResource CardStyle}" Padding="18">
                         <StackPanel>
-                            <TextBlock Text="3. Xác nhận &amp; Thu phí" FontSize="15" FontWeight="SemiBold" Margin="0,0,0,10"/>
+                            <TextBlock Text="3. Xác nhận &amp; Thu phí" FontSize="16" FontWeight="SemiBold" Margin="0,0,0,12"/>
 
                             <CheckBox x:Name="PaidAtCounterCheck" Content="Đã thu tiền mặt tại quầy (kích hoạt ngay)"
                                       IsChecked="True" FontWeight="Medium" Margin="0,0,0,16"/>
 
                             <Button x:Name="SubmitEnrollButton" Content="Xác nhận ghi danh"
-                                    Style="{StaticResource PrimaryButton}" Height="42"
+                                    Style="{StaticResource PrimaryButton}" Height="44" FontSize="14" FontWeight="SemiBold"
                                     Click="SubmitEnroll_Click"/>
+
+                            <!-- Thông báo lỗi trực quan ngay dưới nút bấm -->
+                            <Border x:Name="InlineErrorBorder" Background="#FEF2F2" BorderBrush="#F87171" BorderThickness="1" CornerRadius="6" Padding="10,8" Margin="0,10,0,0" Visibility="Collapsed">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="⚠️ " FontSize="13"/>
+                                    <TextBlock x:Name="InlineErrorText" TextWrapping="Wrap" Foreground="{StaticResource ErrorBrush}" FontWeight="SemiBold" FontSize="12.5" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Border>
                         </StackPanel>
                     </Border>
                 </StackPanel>
             </ScrollViewer>
 
             <!-- CỘT PHẢI: LỊCH SỬ GHI DANH GẦN ĐÂY -->
-            <Border Grid.Column="2" Style="{StaticResource CardStyle}" Padding="16">
+            <Border Grid.Column="2" Style="{StaticResource CardStyle}" Padding="18">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
@@ -118,4 +160,3 @@
         </Grid>
     </Grid>
 </UserControl>
-

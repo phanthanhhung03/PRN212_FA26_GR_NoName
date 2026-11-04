@@ -70,19 +70,32 @@ public partial class StaffEnrollmentPage : UserControl
     {
         if (MemberResultsList.SelectedItem is not MemberSearchOptionDto member)
         {
-            _selectedMember = null;
-            SelectedMemberBox.Visibility = Visibility.Collapsed;
             return;
         }
 
         _selectedMember = member;
-        SelectedMemberName.Text = $"Học viên: {member.FullName}";
-        SelectedMemberContact.Text = $"Email: {member.Email} · SĐT: {member.Phone ?? "Chưa có"}";
+        SelectedMemberName.Text = member.FullName;
+        SelectedMemberContact.Text = $"Email: {member.Email}   |   SĐT: {member.Phone ?? "Chưa có"}";
+
+        // Ẩn khung tìm kiếm và hiện thẻ học viên được chọn
+        SearchPanel.Visibility = Visibility.Collapsed;
         SelectedMemberBox.Visibility = Visibility.Visible;
+        InlineErrorBorder.Visibility = Visibility.Collapsed;
+    }
+
+    private void ChangeMember_Click(object sender, RoutedEventArgs e)
+    {
+        _selectedMember = null;
+        MemberResultsList.SelectedItem = null;
+        SelectedMemberBox.Visibility = Visibility.Collapsed;
+        SearchPanel.Visibility = Visibility.Visible;
+        MemberSearchBox.Focus();
+        InlineErrorBorder.Visibility = Visibility.Collapsed;
     }
 
     private void ClassSelector_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
+        InlineErrorBorder.Visibility = Visibility.Collapsed;
         if (ClassSelector.SelectedItem is not ClassEnrollOptionDto c)
         {
             _selectedClass = null;
@@ -93,27 +106,31 @@ public partial class StaffEnrollmentPage : UserControl
         _selectedClass = c;
         SelectedClassTitle.Text = $"Lớp: {c.ClassName} (Môn: {c.SportName} - Khóa: {c.CourseName})";
         SelectedClassSchedule.Text = $"Lịch học: {c.ScheduleText}";
-        SelectedClassRoomCoach.Text = $"Phòng: {c.RoomName} · HLV: {c.CoachName} · Còn trống: {c.SeatsLeft}/{c.MaxCapacity}";
+        SelectedClassRoomCoach.Text = $"Phòng: {c.RoomName}   |   HLV: {c.CoachName}   |   Còn trống: {c.SeatsLeft}/{c.MaxCapacity}";
         SelectedClassFee.Text = $"Học phí: {c.TuitionFee:N0} ₫";
         SelectedClassBox.Visibility = Visibility.Visible;
     }
 
     private async void SubmitEnroll_Click(object sender, RoutedEventArgs e)
     {
+        InlineErrorBorder.Visibility = Visibility.Collapsed;
+
         if (_selectedMember is null)
         {
             Notice.Show("Vui lòng tìm và chọn một học viên.");
+            MessageBox.Show("Vui lòng tìm và chọn một học viên trước khi ghi danh.", "Thiếu thông tin", MessageBoxButton.OK, MessageBoxImage.Information);
             return;
         }
 
         if (_selectedClass is null)
         {
             Notice.Show("Vui lòng chọn một lớp học.");
+            MessageBox.Show("Vui lòng chọn một lớp học.", "Thiếu thông tin", MessageBoxButton.OK, MessageBoxImage.Information);
             return;
         }
 
         bool isPaid = PaidAtCounterCheck.IsChecked == true;
-        string confirmMsg = $"Xác nhận ghi danh học viên '{_selectedMember.FullName}' vào lớp '{_selectedClass.ClassName}'?\n" +
+        string confirmMsg = $"Xác nhận ghi danh học viên '{_selectedMember.FullName}' vào lớp '{_selectedClass.ClassName}'?\n\n" +
                            $"• Học phí: {_selectedClass.TuitionFee:N0} ₫\n" +
                            $"• Thu phí tại quầy: {(isPaid ? "Đã thu (Kích hoạt ngay)" : "Chưa thu (Chờ thanh toán)")}";
 
@@ -133,7 +150,11 @@ public partial class StaffEnrollmentPage : UserControl
         }
         catch (Exception ex)
         {
+            // Hiển thị cảnh báo trực quan đầy đủ
             Notice.Show("Lỗi ghi danh: " + ex.Message);
+            InlineErrorText.Text = ex.Message;
+            InlineErrorBorder.Visibility = Visibility.Visible;
+            MessageBox.Show(ex.Message, "Không thể ghi danh", MessageBoxButton.OK, MessageBoxImage.Warning);
         }
         finally
         {
@@ -149,6 +170,7 @@ public partial class StaffEnrollmentPage : UserControl
 
     private async void NewMember_Click(object sender, RoutedEventArgs e)
     {
+        InlineErrorBorder.Visibility = Visibility.Collapsed;
         var dlg = new NewMemberQuickDialog
         {
             Owner = Window.GetWindow(this)
@@ -170,4 +192,3 @@ public partial class StaffEnrollmentPage : UserControl
         }
     }
 }
-
