@@ -33,6 +33,7 @@ namespace SportCenter.Services
         {
             RequireMember();
             int currentMemberId = CurrentUser.Value?.UserId ?? 0;
+            await PaymentService.ExpireStalePendingAsync();   // trả chỗ của các Pending quá hạn trước khi đếm
             using var db = new SportCenterDbContext();
 
             var query = db.Classes.AsNoTracking().Where(c => c.Status == "Enrolling");

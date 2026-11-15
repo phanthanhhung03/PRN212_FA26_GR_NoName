@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Threading.Tasks;
 
 namespace SportCenter.Services
@@ -25,6 +26,26 @@ namespace SportCenter.Services
 
         // ------------------ UC10: NHÂN VIÊN GHI DANH HỘ ------------------
 
+        // UC06: học viên hủy đăng ký của chính mình trước ngày khai giảng (kiểm tra trong sp_cancel_enrollment).
+        public async Task CancelSelfAsync(int classId)
+        {
+            int memberId = RequireMember();
+            using var db = new SportCenterDbContext();
+            try
+            {
+                await db.Database.ExecuteSqlAsync($"EXEC dbo.sp_cancel_enrollment @class_id = {classId}, @member_id = {memberId}");
+            }
+            catch (SqlException ex)
+            {
+                throw new InvalidOperationException(ex.Number switch
+                {
+                    51012 => "Bạn không có đăng ký nào đang hiệu lực ở lớp này.",
+                    51013 => "Lớp đã khai giảng, không thể hủy đăng ký.",
+                    _ => "Không hủy được đăng ký. Vui lòng thử lại."
+                }, ex);
+            }
+        }
+
         // Tạo đăng ký Pending cho học viên. Trang gọi tiếp PaymentService để thu tiền.
         public async Task<int> StaffEnrollAsync(int classId, int memberId)
         {
@@ -35,6 +56,7 @@ namespace SportCenter.Services
         // SYS01/SYS02 kiểm tra trong sp_enroll_member (khóa dòng lớp, Pending + Active giữ chỗ).
         private static async Task<int> RunEnrollProcedureAsync(int classId, int memberId, int? registeredBy)
         {
+            await PaymentService.ExpireStalePendingAsync();
             using var db = new SportCenterDbContext();
             var conn = (SqlConnection)db.Database.GetDbConnection();
             if (conn.State != ConnectionState.Open) await conn.OpenAsync();
@@ -98,6 +120,7 @@ namespace SportCenter.Services
         public async Task<List<ClassEnrollOptionDto>> GetOpenClassesForStaffAsync()
         {
             RequireStaffOrManager();
+            await PaymentService.ExpireStalePendingAsync();
             using var db = new SportCenterDbContext();
 
             return await db.Classes.AsNoTracking()
@@ -146,7 +169,8 @@ namespace SportCenter.Services
                 Phone = phone,
                 BirthDate = birthDate,
                 Gender = gender,
-                PasswordHash = BCrypt.Net.BCrypt.HashPassword("123456"),
+                // Mật khẩu ngẫu nhiên không ai biết; học viên tự đặt lại bằng "Quên mật khẩu" (email + SĐT).
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword(Convert.ToBase64String(RandomNumberGenerator.GetBytes(18))),
                 Status = "Active",
                 CreatedAt = DateTime.Now,
                 CreatedBy = staffId

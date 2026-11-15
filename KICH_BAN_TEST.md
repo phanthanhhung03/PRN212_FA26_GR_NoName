@@ -86,13 +86,24 @@ dotnet run --project .\SportCenter\SportCenter\SportCenter.csproj
    - Tìm lớp `CL-Beginner-K02` (hoặc `BR-Beginner-K01`).
    - Cột Thao tác hiện nút xanh **"Đăng ký ngay"** $\rightarrow$ Click vào nút.
    - Popup xác nhận hiện ra tóm tắt thông tin lớp và học phí $\rightarrow$ Bấm **Yes**.
-   - **Kỳ vọng:** Thông báo màu xanh báo thành công; Số chỗ còn lại giảm đi 1; Nút chuyển thành màu xám **"Đã đăng ký"** (khóa không cho bấm tiếp).
-4. **Test Case 2 (Kiểm tra lịch học xuất hiện ngay):**
-   - Bấm sang mục **"Lịch học của tôi"**.
-   - **Kỳ vọng:** Lịch các buổi học của lớp vừa đăng ký xuất hiện đầy đủ trong lịch với trạng thái `Scheduled`.
-5. **Test Case 3 (Chặn đăng ký khi lớp đã hết chỗ - SYS01):**
-   - Chọn bộ lọc Chỗ: *"Lớp đã hết chỗ"* hoặc gõ tìm lớp `CL-Beginner-K01` (đã đủ 4/4 học viên).
-   - **Kỳ vọng:** Cột Còn chỗ hiển thị `0`; Nút bấm hiển thị chữ **"Hết chỗ"** và bị khóa (Disabled).
+   - **Kỳ vọng:** Cửa sổ **"Thanh toán học phí"** mở ra: số tiền, mã đơn, mã QR mô phỏng và dòng *"Hạn thanh toán: HH:mm (giữ chỗ 5 phút)"*. Lúc này đăng ký đang `Pending` và đã giữ chỗ.
+4. **Test Case 2 (Thanh toán thành công):**
+   - Trong cửa sổ thanh toán bấm **"Đã thanh toán"**.
+   - **Kỳ vọng:** Payment `Paid`, đăng ký `Active`; số chỗ còn lại giảm 1; nút đổi thành **"Hủy đăng ký"**. Sang **"Lịch học của tôi"** thấy các buổi của lớp vừa đăng ký.
+5. **Test Case 3 (Thanh toán thất bại):**
+   - Đăng ký một lớp khác, trong cửa sổ thanh toán bấm **"Giả lập thất bại"**.
+   - **Kỳ vọng:** Payment `Cancelled`, đăng ký `Dropped`; chỗ được trả lại; nút quay về **"Đăng ký ngay"** và đăng ký lại được.
+6. **Test Case 4 (Hết hạn giữ chỗ 5 phút):**
+   - Đăng ký một lớp, trong cửa sổ thanh toán bấm **"Đóng"** (không chọn kết quả). Đợi hơn 5 phút rồi bấm **"Xóa bộ lọc"** để tải lại.
+   - **Kỳ vọng:** Payment `Expired`, đăng ký `Dropped`; chỗ được trả lại; nút quay về **"Đăng ký ngay"**.
+7. **Test Case 5 (Chặn đăng ký khi lớp đã hết chỗ - SYS01):**
+   - Chọn bộ lọc Chỗ: *"Lớp đã hết chỗ"* hoặc gõ tìm lớp `BL-Beginner-K01` (đã đủ 3/3).
+   - **Kỳ vọng:** Cột Còn chỗ hiển thị `0`; nút **"Hết chỗ"** bị khóa. Chỗ tính cả đăng ký `Pending` (đang chờ thanh toán) lẫn `Active`.
+
+#### 2.1b. UC06 – Học viên hủy đăng ký lớp (trước ngày khai giảng)
+1. Ở **"Lớp tuyển sinh"**, với lớp đã đăng ký (`Pending` hoặc `Active`) bấm **"Hủy đăng ký"** $\rightarrow$ **Yes**.
+2. **Kỳ vọng:** Đăng ký `Dropped`, chỗ được trả lại, nút quay về **"Đăng ký ngay"**. Khoản `Pending` thành `Cancelled`; khoản đã `Paid` giữ nguyên (hoàn tiền xử lý tại quầy).
+3. Lớp đã khai giảng (`Ongoing`) không còn trong danh sách tuyển sinh nên không hủy được; nếu gọi thẳng, hệ thống báo *"Lớp đã khai giảng, không thể hủy đăng ký."*
 
 #### 2.2. UC10 – Nhân viên ghi danh hộ học viên tại quầy
 - **Tài khoản test:** `staff1@sportcenter.local` / Pass: `123456`
@@ -101,17 +112,18 @@ dotnet run --project .\SportCenter\SportCenter\SportCenter.csproj
    - Tại **Bước 1**: Nhập `member4` hoặc SĐT `0903000004` $\rightarrow$ Chọn học viên **Phan Thị Diệu**. Thẻ học viên màu xanh xuất hiện đẹp mắt.
    - Tại **Bước 2**: Chọn lớp `BR-Beginner-K01` (Bóng rổ). Khung tóm tắt hiện đầy đủ học phí, phòng học.
    - Tại **Bước 3**: Giữ nguyên `[x] Đã thu tiền mặt tại quầy` $\rightarrow$ Bấm **"Xác nhận ghi danh"** $\rightarrow$ Bấm **Yes**.
-   - **Kỳ vọng:** Báo ghi danh thành công. Bảng "Lượt ghi danh gần đây" bên phải lập tức hiển thị dòng mới của Phan Thị Diệu với trạng thái `Active`.
+   - **Kỳ vọng:** Báo ghi danh thành công (đã thanh toán). Bảng "Lượt ghi danh gần đây" hiển thị dòng mới của Phan Thị Diệu với trạng thái `Active`.
+   - Nếu **bỏ tick** "Đã thu tiền mặt": cửa sổ QR mở ra cho học viên quét tại quầy, xử lý giống UC05 (thành công → `Active`, thất bại → `Dropped`, quá 5 phút → hết hạn).
 3. **Test Case 2 (Chặn ghi danh trùng một lớp - SYS02):**
    - Giữ nguyên học viên Phan Thị Diệu và lớp `BR-Beginner-K01` $\rightarrow$ Bấm tiếp **"Xác nhận ghi danh"** $\rightarrow$ Bấm **Yes**.
-   - **Kỳ vọng:** Hệ thống chặn lại và bật ngay Popup cảnh báo ⚠️: *"Học viên 'Phan Thị Diệu' đã tham gia lớp này."*, đồng thời hiện thanh viền đỏ cảnh báo.
+   - **Kỳ vọng:** Hệ thống chặn lại và báo *"Học viên đã có đăng ký đối với lớp này."*, đồng thời hiện thanh viền đỏ cảnh báo.
 4. **Test Case 3 (Tạo nhanh học viên mới tại quầy):**
    - Bấm nút **"+ Tạo học viên mới"**. Cửa sổ popup mở ra với thanh cuộn ScrollViewer tiện lợi.
    - Điền thông tin: `Nguyễn Hoàng Long`, SĐT: `0908888777`, Email: `long.nh@gmail.com`, Ngày sinh, Giới tính $\rightarrow$ Bấm **Tạo học viên**.
-   - **Kỳ vọng:** Tạo xong tài khoản Member trong CSDL (pass mặc định `123456`) và tự động được chọn vào Bước 1. Bạn chỉ cần chọn lớp và bấm Ghi danh là hoàn tất.
+   - **Kỳ vọng:** Tạo xong tài khoản Member với mật khẩu ngẫu nhiên (học viên dùng **"Quên mật khẩu"** để đặt mật khẩu) và tự động được chọn vào Bước 1. Bạn chỉ cần chọn lớp và bấm Ghi danh là hoàn tất.
 
-#### 2.3. UC06 – Xử lý học phí & Đối soát doanh thu
-1. Khi học viên đăng ký (UC05) hoặc Staff ghi danh thu tiền (UC10), hệ thống tự động trích xuất học phí `tuition_fee`, sinh mã `order_code` và lưu vào bảng `payment`.
+#### 2.3. Học phí & Đối soát doanh thu
+1. Khi học viên đăng ký (UC05) hoặc Staff ghi danh (UC10), `sp_create_payment` lấy học phí `tuition_fee`, sinh mã `order_code` và lưu khoản `Pending` vào bảng `payment`; thanh toán thành công thì khoản thành `Paid`.
 2. Đăng nhập tài khoản Quản lý: `manager@sportcenter.local` / Pass: `123456`.
 3. Vào mục **"Báo cáo"** $\rightarrow$ Tab **"Doanh thu"**:
    - **Kỳ vọng:** Doanh thu và số lượng đơn thanh toán tăng lên tương ứng với các khoản học phí vừa phát sinh.

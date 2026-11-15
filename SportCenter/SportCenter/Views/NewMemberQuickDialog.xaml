@@ -14,7 +14,8 @@
         <!-- Header -->
         <StackPanel Grid.Row="0" Margin="0,0,0,16">
             <TextBlock Text="Đăng ký học viên tại quầy" FontSize="18" FontWeight="SemiBold"/>
-            <TextBlock Text="Mật khẩu khởi tạo mặc định cho học viên là 123456" Foreground="{StaticResource MutedTextBrush}" FontSize="12" Margin="0,4,0,0"/>
+            <TextBlock Text="Hệ thống tạo mật khẩu ngẫu nhiên. Học viên dùng &quot;Quên mật khẩu&quot; (email + SĐT) để đặt mật khẩu của mình."
+                       TextWrapping="Wrap" Foreground="{StaticResource MutedTextBrush}" FontSize="12" Margin="0,4,0,0"/>
         </StackPanel>
 
         <!-- Form có thanh cuộn ScrollViewer -->

@@ -15,6 +15,7 @@ public partial class PaymentWindow : Window
         InitializeComponent(); _payment = payment;
         AmountText.Text = $"{payment.Amount:N0} ₫"; OrderText.Text = $"Mã đơn: {payment.OrderCode}";
         DescriptionText.Text = payment.Description; StatusText.Text = $"Trạng thái: {payment.Status}";
+        DeadlineText.Text = $"Hạn thanh toán: {payment.CreatedAt.AddMinutes(PaymentService.PendingMinutes):HH:mm} (giữ chỗ {PaymentService.PendingMinutes} phút)";
         QrPayloadText.Text = payment.QrCode ?? "Không có dữ liệu QR.";
         if (!string.IsNullOrWhiteSpace(payment.QrCode))
         {

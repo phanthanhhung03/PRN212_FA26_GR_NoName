@@ -20,3 +20,5 @@
 :r 008_busy_slots.sql
 
 :r 009_enrollment_payment_procedures.sql
+
+:r 010_pending_expiry_and_cancel.sql

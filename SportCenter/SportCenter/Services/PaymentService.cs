@@ -6,9 +6,19 @@ using System.Data;
 
 namespace SportCenter.Services;
 
-/// <summary>UC06: tạo khoản Pending có QR payload và mô phỏng kết quả thanh toán.</summary>
+/// <summary>UC05/UC10: tạo khoản Pending có QR payload và mô phỏng kết quả thanh toán.</summary>
 public sealed class PaymentService
 {
+    // Đăng ký Pending quá số phút này chưa thanh toán thì hết hạn và trả chỗ.
+    public const int PendingMinutes = 5;
+
+    // shortcut: chỉ dọn khi có người thao tác (tải lớp, ghi danh, xác nhận), chưa có job chạy nền.
+    public static async Task ExpireStalePendingAsync()
+    {
+        using var db = new SportCenterDbContext();
+        await db.Database.ExecuteSqlAsync($"EXEC dbo.sp_expire_pending_enrollments @minutes = {PendingMinutes}");
+    }
+
     public async Task<PaymentCheckoutDto> CreatePendingPaymentAsync(int enrollmentId)
     {
         var role = CurrentUser.Value?.Role.RoleName;
@@ -54,6 +64,7 @@ public sealed class PaymentService
         if (CurrentUser.Value?.Role.RoleName is not ("Member" or "Staff"))
             throw new UnauthorizedAccessException("Không có quyền xác nhận thanh toán.");
 
+        await ExpireStalePendingAsync();   // quá hạn thì giao dịch đã Expired, bị từ chối bên dưới
         using var db = new SportCenterDbContext();
         var conn = (SqlConnection)db.Database.GetDbConnection();
         if (conn.State != ConnectionState.Open) await conn.OpenAsync();
@@ -75,7 +86,7 @@ public sealed class PaymentService
             {
                 51009 => "Không tìm thấy giao dịch.",
                 51010 => "Bạn không có quyền xác nhận giao dịch này.",
-                51011 => "Giao dịch không còn ở trạng thái chờ thanh toán.",
+                51011 => $"Giao dịch không còn ở trạng thái chờ thanh toán (có thể đã quá hạn {PendingMinutes} phút).",
                 _ => "Không cập nhật được trạng thái thanh toán. Vui lòng thử lại."
             }, ex);
         }
