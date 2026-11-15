@@ -1,12 +1,13 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using SportCenter.Dtos;
 using SportCenter.Entities;
 
 namespace SportCenter.Services
 {
-    // Cho học viên xem trung tâm có những môn và khóa học nào đang mở.
+    // Học viên xem danh mục môn, khóa học và các lớp đang tuyển sinh.
     public class MemberCatalogService
     {
+        // Danh mục môn kèm các khóa đang hoạt động.
         public async Task<List<MemberSportDto>> GetCatalogAsync()
         {
             RequireMember();
@@ -26,9 +27,12 @@ namespace SportCenter.Services
                         .ToList()))
                 .ToListAsync();
         }
+
+        // Các lớp đang tuyển sinh, lọc theo môn hoặc khóa (nếu có).
         public async Task<List<MemberClassDto>> GetOpenClassesAsync(int? sportId, int? courseId)
         {
             RequireMember();
+            int currentMemberId = CurrentUser.Value?.UserId ?? 0;
             using var db = new SportCenterDbContext();
 
             var query = db.Classes.AsNoTracking().Where(c => c.Status == "Enrolling");
@@ -45,7 +49,8 @@ namespace SportCenter.Services
                     c.ClassMembers.Count(m => m.Status == "Active"),
                     c.Course.TuitionFee,
                     c.TimeSlots.OrderBy(t => t.DayOfWeek).ThenBy(t => t.StartTime)
-                        .Select(t => t.SlotName).ToList()))
+                        .Select(t => t.SlotName).ToList(),
+                    c.ClassMembers.Any(m => m.MemberId == currentMemberId && m.Status != "Dropped")))
                 .ToListAsync();
         }
         
