@@ -46,7 +46,7 @@ namespace SportCenter.Services
                     c.Coach != null ? c.Coach.FullName : null,
                     c.Room.RoomName, c.StartDate,
                     c.MaxCapacity,
-                    c.ClassMembers.Count(m => m.Status == "Active"),
+                    c.ClassMembers.Count(m => m.Status == "Active" || m.Status == "Pending"),   // Pending giữ chỗ như sp_enroll_member
                     c.Course.TuitionFee,
                     c.TimeSlots.OrderBy(t => t.DayOfWeek).ThenBy(t => t.StartTime)
                         .Select(t => t.SlotName).ToList(),

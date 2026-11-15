@@ -43,5 +43,17 @@ namespace SportCenter.Dtos
         public string EnrolledAtText => EnrolledAt.ToString("dd/MM/yyyy HH:mm");
         public string FeeText => $"{TuitionFee:N0} ₫";
     }
+
+    // Khoản thanh toán Pending kèm dữ liệu QR, trả về từ sp_create_payment.
+    public record PaymentCheckoutDto(
+        int PaymentId,
+        int EnrollmentId,
+        long OrderCode,
+        decimal Amount,
+        string Description,
+        string? QrCode,
+        string? CheckoutUrl,
+        string Status,
+        DateTime CreatedAt);
 }
 

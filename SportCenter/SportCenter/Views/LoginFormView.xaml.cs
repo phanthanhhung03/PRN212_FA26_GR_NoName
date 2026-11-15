@@ -62,9 +62,10 @@ public partial class LoginFormView : UserControl
             CurrentUser.Value = user;
             LoginSucceeded?.Invoke(this, user);
         }
-        catch (Exception ex)
+        catch
         {
-            ShowError(ex.InnerException != null ? ex.InnerException.Message : ex.Message);
+            // Không hiện lỗi kỹ thuật (SQL, tên server) cho người dùng.
+            ShowError("Không kết nối được máy chủ. Vui lòng thử lại.");
         }
         finally
         {
