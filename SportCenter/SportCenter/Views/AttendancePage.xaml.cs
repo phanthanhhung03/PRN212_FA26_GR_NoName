@@ -40,16 +40,6 @@ namespace SportCenter.Views
             Loaded += async (_, _) => await InitAsync();
         }
 
-        public void SetTargetSession(int sessionId)
-        {
-            _targetSessionId = sessionId;
-            BackButton.Visibility = Visibility.Visible;
-            if (_ready)
-            {
-                SessionSelector.SelectedValue = sessionId;
-            }
-        }
-
         private async Task InitAsync()
         {
             try
@@ -85,7 +75,7 @@ namespace SportCenter.Views
             }
             catch (Exception ex)
             {
-                Notice.Show("Lỗi tải danh sách buổi dạy: " + ex.Message);
+                ShowError("Không tải được danh sách buổi dạy.", ex);
             }
         }
 
@@ -113,19 +103,25 @@ namespace SportCenter.Views
                     SessionRoomText.Text = $"Phòng: {sessionDto.RoomName}";
                     SessionStatusText.Text = $"Trạng thái: {sessionDto.Status}";
 
+                    bool isFuture = sessionDto.SessionDate > DateOnly.FromDateTime(DateTime.Today);
                     MarkCompletedCheckBox.IsChecked = sessionDto.Status == "Completed";
-                    MarkCompletedCheckBox.IsEnabled = sessionDto.Status == "Scheduled";
+                    MarkCompletedCheckBox.IsEnabled = sessionDto.Status == "Scheduled" && !isFuture;
                 }
 
                 var list = await _service.GetSessionMembersAsync(sessionId);
                 _members = new ObservableCollection<SessionMemberAttendanceDto>(list);
                 AttendanceGrid.ItemsSource = _members;
 
-                SummaryCountText.Text = $"Tổng số: {_members.Count} học viên (Có mặt: {_members.Count(m => m.Status == "Present" || m.Status == "Late")})";
+                UpdateSummary();
 
                 if (sessionDto?.Status == "Cancelled")
                 {
                     Notice.Show("Buổi học này đã bị hủy, không thể điểm danh.");
+                    SaveButton.IsEnabled = false;
+                }
+                else if (sessionDto is not null && sessionDto.SessionDate > DateOnly.FromDateTime(DateTime.Today))
+                {
+                    Notice.Show("Chưa đến ngày học, chưa thể điểm danh buổi này.");
                     SaveButton.IsEnabled = false;
                 }
                 else
@@ -135,7 +131,7 @@ namespace SportCenter.Views
             }
             catch (Exception ex)
             {
-                Notice.Show("Lỗi tải thông tin học viên: " + ex.Message);
+                ShowError("Không tải được danh sách học viên.", ex);
             }
         }
 
@@ -161,12 +157,27 @@ namespace SportCenter.Views
 
         private void UpdateSummary()
         {
-            SummaryCountText.Text = $"Tổng số: {_members.Count} học viên (Có mặt: {_members.Count(m => m.Status == "Present" || m.Status == "Late")})";
+            int unmarked = _members.Count(m => m.Status is null);
+            SummaryCountText.Text = $"Tổng số: {_members.Count} học viên (Có mặt: {_members.Count(m => m.Status == "Present" || m.Status == "Late")}"
+                + (unmarked > 0 ? $", chưa điểm danh: {unmarked})" : ")");
+        }
+
+        // Lỗi nghiệp vụ hiện nguyên câu; lỗi khác chỉ hiện câu chung, không lộ chi tiết kỹ thuật.
+        private void ShowError(string fallback, Exception ex)
+        {
+            Notice.Show(ex is InvalidOperationException or UnauthorizedAccessException ? ex.Message : fallback);
         }
 
         private async void SaveAttendance_Click(object sender, RoutedEventArgs e)
         {
             if (SessionSelector.SelectedValue is not int sessionId) return;
+
+            int unmarked = _members.Count(m => m.Status is null);
+            if (unmarked > 0)
+            {
+                Notice.Show($"Còn {unmarked} học viên chưa chọn trạng thái điểm danh.");
+                return;
+            }
 
             try
             {
@@ -188,7 +199,7 @@ namespace SportCenter.Views
             }
             catch (Exception ex)
             {
-                Notice.Show("Lỗi lưu điểm danh: " + ex.Message);
+                ShowError("Không lưu được điểm danh. Vui lòng thử lại.", ex);
             }
             finally
             {

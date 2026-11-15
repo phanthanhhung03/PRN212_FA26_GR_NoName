@@ -1,0 +1,71 @@
+<Window x:Class="SportCenter.Views.PaymentWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Thanh toán học phí" Height="560" Width="590"
+        WindowStartupLocation="CenterOwner" ResizeMode="NoResize"
+        Background="{StaticResource BackgroundBrush}"
+        TextElement.Foreground="{StaticResource TextBrush}">
+    <Grid Margin="24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <StackPanel>
+            <TextBlock Text="THANH TOÁN HỌC PHÍ" FontSize="22" FontWeight="Bold"
+                       Foreground="{StaticResource PrimaryDarkBrush}"/>
+            <TextBlock Text="Kiểm tra thông tin và chọn kết quả thanh toán mô phỏng."
+                       Margin="0,5,0,0" Foreground="{StaticResource MutedTextBrush}"/>
+        </StackPanel>
+
+        <Border Grid.Row="1" Style="{StaticResource CardStyle}" Padding="18"
+                Margin="0,16,0,12">
+            <StackPanel>
+                <TextBlock x:Name="AmountText" FontSize="28" FontWeight="Bold"
+                           Foreground="{StaticResource PrimaryBrush}"/>
+                <TextBlock x:Name="OrderText" Margin="0,8,0,0"
+                           Foreground="{StaticResource MutedTextBrush}"/>
+                <TextBlock x:Name="DescriptionText" Margin="0,4,0,0"
+                           Foreground="{StaticResource MutedTextBrush}"/>
+                <TextBlock x:Name="DeadlineText" Margin="0,4,0,0" FontWeight="SemiBold"
+                           Foreground="{StaticResource AccentBrush}"/>
+                <Border Background="{StaticResource PrimaryLightBrush}" CornerRadius="8"
+                        Padding="8,5" Margin="0,12,0,0" HorizontalAlignment="Left">
+                    <TextBlock x:Name="StatusText" FontWeight="SemiBold"
+                               Foreground="{StaticResource PrimaryDarkBrush}"/>
+                </Border>
+            </StackPanel>
+        </Border>
+
+        <Border Grid.Row="2" Style="{StaticResource CardStyle}" Padding="18">
+            <StackPanel>
+                <TextBlock Text="Mã QR / nội dung thanh toán mô phỏng"
+                           FontWeight="SemiBold" FontSize="15"/>
+                <Image x:Name="QrImage" Width="190" Height="190"
+                       HorizontalAlignment="Center" Margin="0,10,0,8"/>
+                <Border Background="{StaticResource BackgroundBrush}" Padding="10"
+                        CornerRadius="8" BorderBrush="{StaticResource BorderBrush}"
+                        BorderThickness="1">
+                    <TextBlock x:Name="QrPayloadText" TextWrapping="Wrap"
+                               FontFamily="Consolas" FontSize="11"/>
+                </Border>
+                <TextBlock Text="Lưu ý: Đây là thanh toán giả lập để kiểm thử, không phải QR ngân hàng và không thể chuyển tiền thật."
+                           TextWrapping="Wrap" Foreground="{StaticResource AccentBrush}"
+                           FontSize="12" Margin="0,10,0,0"/>
+            </StackPanel>
+        </Border>
+
+        <StackPanel Grid.Row="3" Orientation="Horizontal"
+                    HorizontalAlignment="Right" Margin="0,16,0,0">
+            <Button Content="Đóng" MinWidth="90" Margin="0,0,8,0"
+                    Style="{StaticResource SecondaryButton}" Click="Close_Click"/>
+            <Button Content="Giả lập thất bại" Margin="0,0,8,0"
+                    Style="{StaticResource DangerButton}" Click="Fail_Click"/>
+            <Button x:Name="SuccessButton" Content="Đã thanh toán"
+                    MinWidth="140" Style="{StaticResource PrimaryButton}"
+                    Click="Success_Click"/>
+        </StackPanel>
+    </Grid>
+</Window>

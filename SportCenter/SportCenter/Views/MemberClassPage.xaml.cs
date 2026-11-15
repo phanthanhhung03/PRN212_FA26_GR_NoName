@@ -14,6 +14,7 @@ public partial class MemberClassPage : UserControl
 {
     private readonly MemberCatalogService _catalogService = new();
     private readonly EnrollmentService _enrollmentService = new();
+    private readonly PaymentService _paymentService = new();
     private List<MemberSportDto> _sports = new();
     private List<MemberClassDto> _rawClasses = new();
     private bool _loading = true;
@@ -193,6 +194,12 @@ public partial class MemberClassPage : UserControl
     {
         if (sender is not Button { DataContext: MemberClassDto item }) return;
 
+        if (item.IsEnrolled)
+        {
+            await CancelEnrollmentAsync(item);
+            return;
+        }
+
         var confirm = MessageBox.Show(
             $"Bạn có chắc chắn muốn đăng ký tham gia lớp:\n\n" +
             $"• Lớp: {item.ClassName} ({item.SportName})\n" +
@@ -200,7 +207,8 @@ public partial class MemberClassPage : UserControl
             $"• Khai giảng: {item.StartDate:dd/MM/yyyy}\n" +
             $"• Giờ học: {item.ScheduleText}\n" +
             $"• Học phí: {item.TuitionFee:N0} ₫\n\n" +
-            $"Sau khi xác nhận, thông tin lớp học sẽ xuất hiện trong lịch học của bạn.",
+            $"Chỗ của bạn được giữ {PaymentService.PendingMinutes} phút để thanh toán. " +
+            $"Lớp sẽ hiện trong lịch học sau khi thanh toán thành công.",
             "Xác nhận đăng ký lớp học",
             MessageBoxButton.YesNo,
             MessageBoxImage.Question);
@@ -209,13 +217,47 @@ public partial class MemberClassPage : UserControl
 
         try
         {
-            await _enrollmentService.EnrollSelfAsync(item.ClassId);
-            Notice.Show($"Đăng ký thành công lớp {item.ClassName}!");
+            int enrollmentId = await _enrollmentService.EnrollSelfAsync(item.ClassId);
+            var payment = await _paymentService.CreatePendingPaymentAsync(enrollmentId);
+
+            var paymentWindow = new PaymentWindow(payment) { Owner = Window.GetWindow(this) };
+            bool paid = paymentWindow.ShowDialog() == true;
+            Notice.Show(paid
+                ? $"Đăng ký và thanh toán thành công lớp {item.ClassName}!"
+                : $"Lớp {item.ClassName}: chưa thanh toán thành công.");
             await LoadClassesAsync();
         }
         catch (Exception ex)
         {
             Notice.Show("Lỗi đăng ký: " + ex.Message);
+        }
+    }
+
+    // UC06: hủy đăng ký trước ngày khai giảng. Đã thanh toán thì hoàn tiền xử lý tại quầy.
+    private async Task CancelEnrollmentAsync(MemberClassDto item)
+    {
+        var confirm = MessageBox.Show(
+            $"Hủy đăng ký lớp {item.ClassName} (khai giảng {item.StartDate:dd/MM/yyyy})?\n\n" +
+            "Chỗ của bạn sẽ được trả lại. Nếu đã thanh toán, vui lòng liên hệ quầy để được hoàn tiền.",
+            "Xác nhận hủy đăng ký",
+            MessageBoxButton.YesNo,
+            MessageBoxImage.Warning);
+
+        if (confirm != MessageBoxResult.Yes) return;
+
+        try
+        {
+            await _enrollmentService.CancelSelfAsync(item.ClassId);
+            Notice.Show($"Đã hủy đăng ký lớp {item.ClassName}.");
+            await LoadClassesAsync();
+        }
+        catch (InvalidOperationException ex)
+        {
+            Notice.Show(ex.Message);
+        }
+        catch
+        {
+            Notice.Show("Không kết nối được máy chủ. Vui lòng thử lại.");
         }
     }
 }

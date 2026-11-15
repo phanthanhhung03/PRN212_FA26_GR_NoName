@@ -33,6 +33,7 @@ namespace SportCenter.Services
         {
             RequireMember();
             int currentMemberId = CurrentUser.Value?.UserId ?? 0;
+            await PaymentService.ExpireStalePendingAsync();   // trả chỗ của các Pending quá hạn trước khi đếm
             using var db = new SportCenterDbContext();
 
             var query = db.Classes.AsNoTracking().Where(c => c.Status == "Enrolling");
@@ -46,7 +47,7 @@ namespace SportCenter.Services
                     c.Coach != null ? c.Coach.FullName : null,
                     c.Room.RoomName, c.StartDate,
                     c.MaxCapacity,
-                    c.ClassMembers.Count(m => m.Status == "Active"),
+                    c.ClassMembers.Count(m => m.Status == "Active" || m.Status == "Pending"),   // Pending giữ chỗ như sp_enroll_member
                     c.Course.TuitionFee,
                     c.TimeSlots.OrderBy(t => t.DayOfWeek).ThenBy(t => t.StartTime)
                         .Select(t => t.SlotName).ToList(),

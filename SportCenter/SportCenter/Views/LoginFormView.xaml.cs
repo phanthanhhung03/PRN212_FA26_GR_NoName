@@ -38,7 +38,6 @@ public partial class LoginFormView : UserControl
 
     private void BackButton_Click(object sender, RoutedEventArgs e) => BackRequested?.Invoke(this, EventArgs.Empty);
 
-    // UI mẫu: chưa xác thực thật, chỉ hiện lỗi khi để trống.
     private async void LoginButton_Click(object sender, RoutedEventArgs e)
     {
         if (string.IsNullOrWhiteSpace(UserEmailBox.Text) || PasswordBox.Password.Length == 0)
@@ -47,7 +46,7 @@ public partial class LoginFormView : UserControl
             return;
         }
 
-        LoginButton.IsEnabled = true;
+        LoginButton.IsEnabled = false;                // chặn bấm hai lần trong lúc đang kiểm tra
         try
         {
             User? user = await new AuthService()
@@ -62,9 +61,10 @@ public partial class LoginFormView : UserControl
             CurrentUser.Value = user;
             LoginSucceeded?.Invoke(this, user);
         }
-        catch (Exception ex)
+        catch
         {
-            ShowError(ex.InnerException != null ? ex.InnerException.Message : ex.Message);
+            // Không hiện lỗi kỹ thuật (SQL, tên server) cho người dùng.
+            ShowError("Không kết nối được máy chủ. Vui lòng thử lại.");
         }
         finally
         {

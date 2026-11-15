@@ -13,6 +13,7 @@ namespace SportCenter.Views;
 public partial class StaffEnrollmentPage : UserControl
 {
     private readonly EnrollmentService _service = new();
+    private readonly PaymentService _paymentService = new();
     private List<MemberSearchOptionDto> _members = new();
     private List<ClassEnrollOptionDto> _classes = new();
 
@@ -140,9 +141,26 @@ public partial class StaffEnrollmentPage : UserControl
         try
         {
             SubmitEnrollButton.IsEnabled = false;
-            await _service.StaffEnrollAsync(_selectedClass.ClassId, _selectedMember.MemberId, isPaid);
+            int enrollmentId = await _service.StaffEnrollAsync(_selectedClass.ClassId, _selectedMember.MemberId);
+            var payment = await _paymentService.CreatePendingPaymentAsync(enrollmentId);
 
-            Notice.Show($"Đã ghi danh thành công cho '{_selectedMember.FullName}' vào lớp '{_selectedClass.ClassName}'!");
+            bool activated;
+            if (isPaid)
+            {
+                // Đã thu tiền mặt tại quầy: xác nhận luôn, đăng ký chuyển Active.
+                await _paymentService.ConfirmMockPaymentAsync(payment.PaymentId, success: true);
+                activated = true;
+            }
+            else
+            {
+                // Chưa thu: mở QR cho học viên quét tại quầy.
+                var paymentWindow = new PaymentWindow(payment) { Owner = Window.GetWindow(this) };
+                activated = paymentWindow.ShowDialog() == true;
+            }
+
+            Notice.Show(activated
+                ? $"Đã ghi danh '{_selectedMember.FullName}' vào lớp '{_selectedClass.ClassName}' (đã thanh toán)."
+                : $"'{_selectedMember.FullName}' - lớp '{_selectedClass.ClassName}': chưa thanh toán thành công.");
 
             // Làm mới lớp học và lịch sử ghi danh
             await LoadClassesAsync();

@@ -1,9 +1,12 @@
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using SportCenter.Dtos;
 using SportCenter.Entities;
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Threading.Tasks;
 
 namespace SportCenter.Services
@@ -14,135 +17,78 @@ namespace SportCenter.Services
     {
         // ------------------ UC05: MEMBER TỰ ĐĂNG KÝ ------------------
 
-        public async Task EnrollSelfAsync(int classId)
+        // Tạo đăng ký Pending (giữ chỗ). Học viên thanh toán qua PaymentService để chuyển sang Active.
+        public async Task<int> EnrollSelfAsync(int classId)
         {
             int memberId = RequireMember();
-            using var db = new SportCenterDbContext();
-
-            var classEntity = await db.Classes
-                .Include(c => c.Course)
-                .FirstOrDefaultAsync(c => c.ClassId == classId)
-                ?? throw new InvalidOperationException("Không tìm thấy lớp học.");
-
-            if (classEntity.Status != "Enrolling")
-            {
-                throw new InvalidOperationException("Lớp học này hiện không ở trạng thái mở tuyển sinh.");
-            }
-
-            // SYS02: Không ghi danh trùng lớp
-            bool alreadyEnrolled = await db.ClassMembers
-                .AnyAsync(cm => cm.ClassId == classId && cm.MemberId == memberId && cm.Status != "Dropped");
-            if (alreadyEnrolled)
-            {
-                throw new InvalidOperationException("Bạn đã ghi danh vào lớp học này rồi.");
-            }
-
-            // SYS01: Không ghi danh vượt quá sĩ số
-            int activeCount = await db.ClassMembers
-                .CountAsync(cm => cm.ClassId == classId && cm.Status == "Active");
-            if (activeCount >= classEntity.MaxCapacity)
-            {
-                throw new InvalidOperationException("Lớp học đã đủ sĩ số tối đa (hết chỗ).");
-            }
-
-            var now = DateTime.Now;
-            var enrollment = new ClassMember
-            {
-                ClassId = classId,
-                MemberId = memberId,
-                EnrolledAt = now,
-                RegisteredBy = null,
-                Status = "Active"
-            };
-            db.ClassMembers.Add(enrollment);
-
-            // Sinh mã hóa đơn thanh toán
-            var desc = $"HP {classEntity.ClassName}";
-            if (desc.Length > 25) desc = desc[..25];
-
-            var payment = new Payment
-            {
-                Enrollment = enrollment,
-                OrderCode = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
-                Amount = classEntity.Course.TuitionFee,
-                Description = desc,
-                Status = "Paid",
-                PaidAt = now,
-                CreatedBy = memberId,
-                CreatedAt = now
-            };
-            db.Payments.Add(payment);
-
-            await db.SaveChangesAsync();
+            return await RunEnrollProcedureAsync(classId, memberId, registeredBy: null);
         }
 
         // ------------------ UC10: NHÂN VIÊN GHI DANH HỘ ------------------
 
-        public async Task<int> StaffEnrollAsync(int classId, int memberId, bool isPaidAtCounter)
+        // UC06: học viên hủy đăng ký của chính mình trước ngày khai giảng (kiểm tra trong sp_cancel_enrollment).
+        public async Task CancelSelfAsync(int classId)
+        {
+            int memberId = RequireMember();
+            using var db = new SportCenterDbContext();
+            try
+            {
+                await db.Database.ExecuteSqlAsync($"EXEC dbo.sp_cancel_enrollment @class_id = {classId}, @member_id = {memberId}");
+            }
+            catch (SqlException ex)
+            {
+                throw new InvalidOperationException(ex.Number switch
+                {
+                    51012 => "Bạn không có đăng ký nào đang hiệu lực ở lớp này.",
+                    51013 => "Lớp đã khai giảng, không thể hủy đăng ký.",
+                    _ => "Không hủy được đăng ký. Vui lòng thử lại."
+                }, ex);
+            }
+        }
+
+        // Tạo đăng ký Pending cho học viên. Trang gọi tiếp PaymentService để thu tiền.
+        public async Task<int> StaffEnrollAsync(int classId, int memberId)
         {
             int staffId = RequireStaffOrManager();
+            return await RunEnrollProcedureAsync(classId, memberId, staffId);
+        }
+
+        // SYS01/SYS02 kiểm tra trong sp_enroll_member (khóa dòng lớp, Pending + Active giữ chỗ).
+        private static async Task<int> RunEnrollProcedureAsync(int classId, int memberId, int? registeredBy)
+        {
+            await PaymentService.ExpireStalePendingAsync();
             using var db = new SportCenterDbContext();
+            var conn = (SqlConnection)db.Database.GetDbConnection();
+            if (conn.State != ConnectionState.Open) await conn.OpenAsync();
 
-            var member = await db.Users
-                .Include(u => u.Role)
-                .FirstOrDefaultAsync(u => u.UserId == memberId && u.Role.RoleName == "Member" && u.Status == "Active")
-                ?? throw new InvalidOperationException("Học viên không tồn tại hoặc tài khoản đang bị khóa.");
+            using var cmd = conn.CreateCommand();
+            cmd.CommandType = CommandType.StoredProcedure;
+            cmd.CommandText = "dbo.sp_enroll_member";
+            cmd.Parameters.Add("@class_id", SqlDbType.Int).Value = classId;
+            cmd.Parameters.Add("@member_id", SqlDbType.Int).Value = memberId;
+            cmd.Parameters.Add("@registered_by", SqlDbType.Int).Value = (object?)registeredBy ?? DBNull.Value;
+            var output = new SqlParameter("@enrollment_id", SqlDbType.Int) { Direction = ParameterDirection.Output };
+            cmd.Parameters.Add(output);
 
-            var classEntity = await db.Classes
-                .Include(c => c.Course)
-                .FirstOrDefaultAsync(c => c.ClassId == classId)
-                ?? throw new InvalidOperationException("Không tìm thấy lớp học.");
-
-            if (classEntity.Status != "Enrolling" && classEntity.Status != "Ongoing")
+            try
             {
-                throw new InvalidOperationException("Lớp học này hiện không nhận học viên.");
+                await cmd.ExecuteNonQueryAsync();
+                return (int)output.Value;
             }
-
-            // SYS02: Không ghi danh trùng một lớp
-            bool alreadyEnrolled = await db.ClassMembers
-                .AnyAsync(cm => cm.ClassId == classId && cm.MemberId == memberId && cm.Status != "Dropped");
-            if (alreadyEnrolled)
+            catch (SqlException ex)
             {
-                throw new InvalidOperationException($"Học viên '{member.FullName}' đã tham gia lớp này.");
+                throw new InvalidOperationException(ex.Number switch
+                {
+                    51001 => "Tài khoản học viên không tồn tại hoặc không hoạt động.",
+                    51002 => "Tài khoản không hợp lệ để tự ghi danh.",
+                    51003 => "Chỉ Staff đang hoạt động mới được ghi danh hộ.",
+                    51004 => "Lớp không tồn tại hoặc không còn tuyển sinh.",
+                    51005 => "Học viên đã có đăng ký đối với lớp này.",
+                    51006 => "Lớp đã đủ sĩ số.",
+                    2601 or 2627 => "Học viên đã được ghi danh vào lớp này.",
+                    _ => "Không ghi danh được. Vui lòng thử lại."
+                }, ex);
             }
-
-            // SYS01: Không ghi danh vượt quá sĩ số
-            int activeCount = await db.ClassMembers
-                .CountAsync(cm => cm.ClassId == classId && cm.Status == "Active");
-            if (activeCount >= classEntity.MaxCapacity)
-            {
-                throw new InvalidOperationException($"Lớp học đã đủ sĩ số tối đa ({classEntity.MaxCapacity} học viên).");
-            }
-
-            var now = DateTime.Now;
-            var enrollment = new ClassMember
-            {
-                ClassId = classId,
-                MemberId = memberId,
-                EnrolledAt = now,
-                RegisteredBy = staffId,
-                Status = isPaidAtCounter ? "Active" : "Pending"
-            };
-            db.ClassMembers.Add(enrollment);
-
-            var desc = $"HP {classEntity.ClassName}";
-            if (desc.Length > 25) desc = desc[..25];
-
-            var payment = new Payment
-            {
-                Enrollment = enrollment,
-                OrderCode = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
-                Amount = classEntity.Course.TuitionFee,
-                Description = desc,
-                Status = isPaidAtCounter ? "Paid" : "Pending",
-                PaidAt = isPaidAtCounter ? now : null,
-                CreatedBy = staffId,
-                CreatedAt = now
-            };
-            db.Payments.Add(payment);
-
-            await db.SaveChangesAsync();
-            return enrollment.EnrollmentId;
         }
 
         // Tìm kiếm nhanh học viên theo Tên, SĐT, Email
@@ -174,10 +120,11 @@ namespace SportCenter.Services
         public async Task<List<ClassEnrollOptionDto>> GetOpenClassesForStaffAsync()
         {
             RequireStaffOrManager();
+            await PaymentService.ExpireStalePendingAsync();
             using var db = new SportCenterDbContext();
 
             return await db.Classes.AsNoTracking()
-                .Where(c => c.Status == "Enrolling" || c.Status == "Ongoing")
+                .Where(c => c.Status == "Enrolling")    // sp_enroll_member chỉ nhận lớp Enrolling
                 .OrderBy(c => c.Course.Sport.SportName)
                 .ThenBy(c => c.ClassName)
                 .Select(c => new ClassEnrollOptionDto(
@@ -187,8 +134,8 @@ namespace SportCenter.Services
                     c.Course.CourseName,
                     c.Course.TuitionFee,
                     c.MaxCapacity,
-                    c.ClassMembers.Count(m => m.Status == "Active"),
-                    Math.Max(0, c.MaxCapacity - c.ClassMembers.Count(m => m.Status == "Active")),
+                    c.ClassMembers.Count(m => m.Status == "Active" || m.Status == "Pending"),
+                    Math.Max(0, c.MaxCapacity - c.ClassMembers.Count(m => m.Status == "Active" || m.Status == "Pending")),
                     string.Join(", ", c.TimeSlots.OrderBy(t => t.DayOfWeek).ThenBy(t => t.StartTime).Select(t => t.SlotName)),
                     c.Room.RoomName,
                     c.Coach != null ? c.Coach.FullName : "Chưa phân công"))
@@ -222,7 +169,8 @@ namespace SportCenter.Services
                 Phone = phone,
                 BirthDate = birthDate,
                 Gender = gender,
-                PasswordHash = BCrypt.Net.BCrypt.HashPassword("123456"),
+                // Mật khẩu ngẫu nhiên không ai biết; học viên tự đặt lại bằng "Quên mật khẩu" (email + SĐT).
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword(Convert.ToBase64String(RandomNumberGenerator.GetBytes(18))),
                 Status = "Active",
                 CreatedAt = DateTime.Now,
                 CreatedBy = staffId

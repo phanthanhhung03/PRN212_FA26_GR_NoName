@@ -50,7 +50,7 @@ namespace SportCenter.Views
             }
             catch (Exception ex)
             {
-                Notice.Show("Lỗi tải dữ liệu: " + ex.Message);
+                ShowError("Không tải được dữ liệu.", ex);
             }
         }
 
@@ -100,7 +100,7 @@ namespace SportCenter.Views
             }
             catch (Exception ex)
             {
-                Notice.Show("Không thể tải danh sách buổi dạy: " + ex.Message);
+                ShowError("Không tải được danh sách buổi dạy.", ex);
             }
         }
 
@@ -138,8 +138,14 @@ namespace SportCenter.Views
             }
             catch (Exception ex)
             {
-                Notice.Show("Lỗi tải học viên: " + ex.Message);
+                ShowError("Không tải được danh sách học viên.", ex);
             }
+        }
+
+        // Lỗi nghiệp vụ hiện nguyên câu; lỗi khác chỉ hiện câu chung, không lộ chi tiết kỹ thuật.
+        private void ShowError(string fallback, Exception ex)
+        {
+            Notice.Show(ex is InvalidOperationException or UnauthorizedAccessException ? ex.Message : fallback);
         }
 
         private async void Filter_Changed(object sender, SelectionChangedEventArgs e)
