@@ -266,19 +266,19 @@ BEGIN
     BEGIN TRY
         BEGIN TRANSACTION;
 
-        DECLARE @enrollment_id INT;
-        SELECT @enrollment_id = enrollment_id
+        DECLARE @enrollment_id INT, @enroll_status VARCHAR(20);
+        SELECT @enrollment_id = enrollment_id, @enroll_status = status
         FROM dbo.class_members WITH (UPDLOCK, HOLDLOCK)
         WHERE class_id = @class_id AND member_id = @member_id
-          AND status IN ('Pending', 'Active');
+         AND status IN ('Pending', 'Active');
 
         IF @enrollment_id IS NULL
             THROW 51012, N'Bạn không có đăng ký nào đang hiệu lực ở lớp này.', 1;
 
-        IF NOT EXISTS (
-            SELECT 1 FROM dbo.[class]
-            WHERE class_id = @class_id AND status = 'Enrolling'
-              AND start_date > CAST(GETDATE() AS DATE))
+        IF @enroll_status = 'Active' AND NOT EXISTS (
+         SELECT 1 FROM dbo.[class]
+         WHERE class_id = @class_id AND status = 'Enrolling'
+            AND start_date > CAST(GETDATE() AS DATE))
             THROW 51013, N'Lớp đã khai giảng, không thể hủy đăng ký.', 1;
 
         UPDATE dbo.class_members
