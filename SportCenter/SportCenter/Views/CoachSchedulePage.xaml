@@ -91,7 +91,7 @@
                             <DataGrid.Columns>
                                 <DataGridTextColumn Header="Họ và tên" Binding="{Binding FullName}" Width="*" MinWidth="130" ElementStyle="{StaticResource TrimCellText}"/>
                                 <DataGridTextColumn Header="SĐT" Binding="{Binding Phone}" Width="95" MinWidth="95"/>
-                                <DataGridTextColumn Header="Điểm danh" Binding="{Binding Status}" Width="85" MinWidth="85" ElementStyle="{StaticResource CenterCellText}"/>
+                                <DataGridTextColumn Header="Điểm danh" Binding="{Binding StatusText}" Width="110" MinWidth="110" ElementStyle="{StaticResource CenterCellText}"/>
                             </DataGrid.Columns>
                         </DataGrid>
                     </DockPanel>

@@ -44,9 +44,19 @@ namespace SportCenter.Dtos
         public string FullName { get; set; } = string.Empty;
         public string Email { get; set; } = string.Empty;
         public string? Phone { get; set; }
-        public string Status { get; set; } = "Present"; // Present, Absent, Late, Excused
+        public string? Status { get; set; }   // Present, Absent, Late, Excused; null = chưa điểm danh
         public string? Remarks { get; set; }
         public DateTime? CheckInTime { get; set; }
+
+        public string StatusText => Status switch
+        {
+            null => "Chưa điểm danh",
+            "Present" => "Có mặt",
+            "Absent" => "Vắng",
+            "Late" => "Đi muộn",
+            "Excused" => "Có phép",
+            _ => Status
+        };
 
         public bool IsPresent
         {
@@ -75,7 +85,7 @@ namespace SportCenter.Dtos
 
     public record AttendanceItemUpdateDto(
         int MemberId,
-        string Status,
+        string? Status,
         string? Remarks);
 }
 

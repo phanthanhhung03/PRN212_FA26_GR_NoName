@@ -142,7 +142,9 @@ dotnet run --project .\SportCenter\SportCenter\SportCenter.csproj
 4. Thử đổi các bộ lọc Lớp học, Thời gian (Hôm nay, Tuần này), Trạng thái.
 
 #### 3.2. UC09 – HLV điểm danh học viên & Hoàn thành buổi học
-1. Tại màn hình Lịch dạy, bấm nút **"Điểm danh"** ở một buổi học (hoặc bấm mục **"Điểm danh"** trên sidebar).
+1. Tại màn hình Lịch dạy, bấm nút **"Điểm danh"** ở một buổi học **đã đến ngày** (hoặc bấm mục **"Điểm danh"** trên sidebar).
+   - Học viên chưa điểm danh hiện ô trạng thái trống ("Chưa điểm danh"), không mặc định là có mặt. Bấm Lưu khi còn ô trống thì hệ thống báo *"Còn N học viên chưa chọn trạng thái điểm danh."*
+   - Buổi **chưa đến ngày**: nút Lưu và ô Completed bị khóa, báo *"Chưa đến ngày học, chưa thể điểm danh buổi này."*
 2. **Thao tác điểm danh:**
    - Bấm **"✓ Tất cả có mặt"** $\rightarrow$ Toàn bộ học viên chuyển thành `Present`.
    - Chọn thủ công 1 học viên thành `Late` (Đi muộn), nhập ghi chú: *"Đến muộn 15 phút"*.

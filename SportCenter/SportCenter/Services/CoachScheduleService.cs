@@ -12,6 +12,8 @@ namespace SportCenter.Services
     // UC09: Coach điểm danh học viên và đánh dấu hoàn thành buổi học
     public class CoachScheduleService
     {
+        private static readonly string[] AttendanceStatuses = { "Present", "Absent", "Late", "Excused" };
+
         public async Task<List<CoachClassOptionDto>> GetMyClassesAsync()
         {
             int coachId = RequireCoach();
@@ -77,21 +79,6 @@ namespace SportCenter.Services
                 .ToListAsync();
         }
 
-        public async Task<Session?> GetSessionDetailAsync(int sessionId)
-        {
-            int coachId = RequireCoach();
-            using var db = new SportCenterDbContext();
-
-            return await db.Sessions
-                .AsNoTracking()
-                .Include(s => s.Class)
-                    .ThenInclude(c => c.Course)
-                        .ThenInclude(co => co.Sport)
-                .Include(s => s.Room)
-                .Include(s => s.TimeSlot)
-                .FirstOrDefaultAsync(s => s.SessionId == sessionId && s.CoachId == coachId);
-        }
-
         public async Task<List<SessionMemberAttendanceDto>> GetSessionMembersAsync(int sessionId)
         {
             int coachId = RequireCoach();
@@ -125,7 +112,7 @@ namespace SportCenter.Services
                     FullName = cm.Member.FullName,
                     Email = cm.Member.Email,
                     Phone = cm.Member.Phone,
-                    Status = att?.Status ?? "Present",
+                    Status = att?.Status,      // null = chưa điểm danh; Coach phải tự chọn
                     Remarks = att?.Remarks,
                     CheckInTime = att?.CheckInTime
                 });
@@ -148,6 +135,26 @@ namespace SportCenter.Services
                 throw new InvalidOperationException("Không thể điểm danh cho buổi học đã bị hủy.");
             }
 
+            if (session.SessionDate > DateOnly.FromDateTime(DateTime.Today))
+            {
+                throw new InvalidOperationException("Chưa đến ngày học, không thể điểm danh hay hoàn thành buổi này.");
+            }
+
+            if (updates.Any(u => !AttendanceStatuses.Contains(u.Status)))
+            {
+                throw new InvalidOperationException("Còn học viên chưa chọn trạng thái điểm danh.");
+            }
+
+            // Chỉ nhận học viên đang học (Active) của lớp này, không tin danh sách gửi lên.
+            var activeIds = await db.ClassMembers
+                .Where(cm => cm.ClassId == session.ClassId && cm.Status == "Active")
+                .Select(cm => cm.MemberId)
+                .ToListAsync();
+            if (updates.Any(u => !activeIds.Contains(u.MemberId)))
+            {
+                throw new InvalidOperationException("Danh sách điểm danh có học viên không thuộc lớp này.");
+            }
+
             var existingAttendances = await db.Attendances
                 .Where(a => a.SessionId == sessionId)
                 .ToListAsync();
@@ -163,7 +170,7 @@ namespace SportCenter.Services
                     {
                         SessionId = sessionId,
                         MemberId = update.MemberId,
-                        Status = update.Status,
+                        Status = update.Status!,       // đã kiểm tra hợp lệ ở trên
                         Remarks = string.IsNullOrWhiteSpace(update.Remarks) ? null : update.Remarks.Trim(),
                         MarkedBy = coachId,
                         UpdatedAt = now,
@@ -173,7 +180,7 @@ namespace SportCenter.Services
                 }
                 else
                 {
-                    att.Status = update.Status;
+                    att.Status = update.Status!;
                     att.Remarks = string.IsNullOrWhiteSpace(update.Remarks) ? null : update.Remarks.Trim();
                     att.MarkedBy = coachId;
                     att.UpdatedAt = now;
