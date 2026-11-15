@@ -2,6 +2,7 @@
 -- Seed contains Vietnamese text: run with UTF-8 code page (-f 65001):
 --   sqlcmd -S . -E -I -b -f 65001 -i build.sql
 :r 000_create_database.sql
+
 :r 001_schema.sql
 
 :r 002_functions.sql
@@ -17,3 +18,5 @@
 :r 007_seed_data.sql
 
 :r 008_busy_slots.sql
+
+:r 009_enrollment_payment_procedures.sql

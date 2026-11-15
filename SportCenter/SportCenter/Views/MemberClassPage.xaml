@@ -27,6 +27,30 @@
                 <DataGridTextColumn Header="Giờ học"    Binding="{Binding ScheduleText}" MinWidth="160" Width="2*" ElementStyle="{StaticResource TrimCellText}"/>
                 <DataGridTextColumn Header="Còn chỗ"    Binding="{Binding SeatsLeft}"  Width="80" MinWidth="80" ElementStyle="{StaticResource CenterCellText}"/>
                 <DataGridTextColumn Header="Học phí"    Binding="{Binding TuitionFee, StringFormat='{}{0:N0} ₫', ConverterCulture=vi-VN}" Width="120" MinWidth="120"/>
+                <DataGridTemplateColumn Header="Đăng ký" Width="112" MinWidth="112">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <Button Content="Ghi danh" Tag="{Binding ClassId}"
+                    Click="Enroll_Click"
+                    Height="34" FontSize="13" Margin="4,3" Padding="10,4">
+                                <Button.Style>
+                                    <Style TargetType="Button" BasedOn="{StaticResource PrimaryButton}">
+                                        <Setter Property="Height" Value="34"/>
+                                        <Setter Property="FontSize" Value="13"/>
+                                        <Setter Property="Margin" Value="4,3"/>
+                                        <Setter Property="Padding" Value="10,4"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding SeatsLeft}" Value="0">
+                                                <Setter Property="Content" Value="Hết chỗ"/>
+                                                <Setter Property="IsEnabled" Value="False"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                            </Button>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
             </DataGrid.Columns>
         </DataGrid>
     </Grid>
