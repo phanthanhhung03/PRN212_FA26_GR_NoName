@@ -9,12 +9,14 @@ namespace SportCenter.Dtos
         int ClassId, string ClassName, string SportName, string CourseName, string? Level,
         string? CoachName, string RoomName, DateOnly StartDate,
         int MaxCapacity, int ActiveMembers, decimal TuitionFee, List<string> TimeSlotNames,
-        bool IsEnrolled = false)
+        bool IsEnrolled = false, bool HasStarted = false)
     {
         public int SeatsLeft => Math.Max(0, MaxCapacity - ActiveMembers);
         public string ScheduleText => string.Join(", ", TimeSlotNames);
         // Đã đăng ký thì nút dùng để hủy (UC06); chưa đăng ký thì dùng để đăng ký khi còn chỗ.
-        public bool CanEnroll => IsEnrolled || SeatsLeft > 0;
-        public string EnrollButtonText => IsEnrolled ? "Hủy đăng ký" : (SeatsLeft > 0 ? "Đăng ký ngay" : "Hết chỗ");
+        public bool CanEnroll => !HasStarted && (IsEnrolled || SeatsLeft > 0);
+        public string EnrollButtonText => HasStarted ? "Đã khai giảng"
+            : IsEnrolled ? "Hủy đăng ký"
+            : SeatsLeft > 0 ? "Đăng ký ngay" : "Hết chỗ";
     }
 }

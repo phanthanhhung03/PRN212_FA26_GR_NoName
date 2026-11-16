@@ -116,15 +116,23 @@ namespace SportCenter.Services
                 .ToListAsync();
         }
 
-        // Danh sách lớp đang tuyển sinh cho Staff chọn
-        public async Task<List<ClassEnrollOptionDto>> GetOpenClassesForStaffAsync()
+        // Danh sách lớp Staff có thể ghi danh: đang tuyển sinh, chưa khai giảng,
+        // và (nếu đã chọn học viên) học viên đó chưa có đăng ký ở lớp.
+        public async Task<List<ClassEnrollOptionDto>> GetOpenClassesForStaffAsync(int? memberId = null)
         {
             RequireStaffOrManager();
             await PaymentService.ExpireStalePendingAsync();
             using var db = new SportCenterDbContext();
 
-            return await db.Classes.AsNoTracking()
-                .Where(c => c.Status == "Enrolling")    // sp_enroll_member chỉ nhận lớp Enrolling
+            var today = DateOnly.FromDateTime(DateTime.Today);
+            var query = db.Classes.AsNoTracking()
+                .Where(c => c.Status == "Enrolling"        // sp_enroll_member chỉ nhận lớp Enrolling
+                         && c.StartDate > today);          // đã đến/qua ngày khai giảng thì loại
+
+            if (memberId is not null)
+                query = query.Where(c => !c.ClassMembers.Any(m => m.MemberId == memberId && m.Status != "Dropped"));
+
+            return await query
                 .OrderBy(c => c.Course.Sport.SportName)
                 .ThenBy(c => c.ClassName)
                 .Select(c => new ClassEnrollOptionDto(

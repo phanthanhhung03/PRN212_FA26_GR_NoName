@@ -28,26 +28,29 @@ public partial class StaffEnrollmentPage : UserControl
 
     private async Task InitAsync()
     {
-        try
-        {
-            await LoadClassesAsync();
-            await SearchMembersAsync(string.Empty);
-            await LoadRecentEnrollmentsAsync();
-        }
-        catch (Exception ex)
-        {
-            Notice.Show("Lỗi tải dữ liệu: " + ex.Message);
-        }
+        // Chạy song song: bảng ghi danh gần đây không phải chờ lớp/học viên nạp xong.
+        await Task.WhenAll(
+            SafeLoadAsync(LoadRecentEnrollmentsAsync),
+            SafeLoadAsync(LoadClassesAsync),
+            SafeLoadAsync(() => SearchMembersAsync(string.Empty)));
+    }
+
+    private async Task SafeLoadAsync(Func<Task> load)
+    {
+        try { await load(); }
+        catch (Exception ex) { Notice.Show("Lỗi tải dữ liệu: " + ex.Message); }
     }
 
     private async Task LoadClassesAsync()
     {
-        _classes = await _service.GetOpenClassesForStaffAsync();
+        _classes = await _service.GetOpenClassesForStaffAsync(_selectedMember?.MemberId);
         ClassSelector.ItemsSource = _classes;
         if (_classes.Count > 0)
         {
             ClassSelector.SelectedIndex = 0;
         }
+        try { await LoadClassesAsync(); }
+        catch (Exception ex) { Notice.Show("Lỗi tải danh sách lớp: " + ex.Message); }
     }
 
     private async Task SearchMembersAsync(string keyword)
@@ -64,7 +67,14 @@ public partial class StaffEnrollmentPage : UserControl
 
     private async void MemberSearchBox_TextChanged(object sender, TextChangedEventArgs e)
     {
+        ClearMemberSearchBtn.Visibility = string.IsNullOrEmpty(MemberSearchBox.Text)
+        ? Visibility.Collapsed : Visibility.Visible;
         await SearchMembersAsync(MemberSearchBox.Text);
+    }
+    private void ClearMemberSearch_Click(object sender, RoutedEventArgs e)
+    {
+        MemberSearchBox.Clear();      // kích hoạt TextChanged: nạp lại danh sách đầy đủ
+        MemberSearchBox.Focus();
     }
 
     private void MemberResultsList_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -84,7 +94,7 @@ public partial class StaffEnrollmentPage : UserControl
         InlineErrorBorder.Visibility = Visibility.Collapsed;
     }
 
-    private void ChangeMember_Click(object sender, RoutedEventArgs e)
+    private async void ChangeMember_Click(object sender, RoutedEventArgs e)
     {
         _selectedMember = null;
         MemberResultsList.SelectedItem = null;
@@ -92,6 +102,8 @@ public partial class StaffEnrollmentPage : UserControl
         SearchPanel.Visibility = Visibility.Visible;
         MemberSearchBox.Focus();
         InlineErrorBorder.Visibility = Visibility.Collapsed;
+        try { await LoadClassesAsync(); }
+        catch (Exception ex) { Notice.Show("Lỗi tải danh sách lớp: " + ex.Message); }
     }
 
     private void ClassSelector_SelectionChanged(object sender, SelectionChangedEventArgs e)
