@@ -33,10 +33,15 @@
                             <!-- Khung tìm kiếm học viên (ẩn khi đã chọn) -->
                             <StackPanel x:Name="SearchPanel">
                                 <TextBlock Text="Tìm kiếm theo Tên, Số điện thoại hoặc Email:" FontSize="12" Foreground="{StaticResource MutedTextBrush}" Margin="0,0,0,6"/>
-                                <TextBox x:Name="MemberSearchBox" Style="{StaticResource InputTextBox}"
-                                         Height="40" Padding="10,0" Margin="0,0,0,8"
-                                         TextChanged="MemberSearchBox_TextChanged"/>
-
+                                <Grid Margin="0,0,0,8">
+                                    <TextBox x:Name="MemberSearchBox" Style="{StaticResource InputTextBox}"
+                                     Height="40" Padding="10,0,30,0"
+                                     TextChanged="MemberSearchBox_TextChanged"/>
+                                                            <Button x:Name="ClearMemberSearchBtn" Content="✕" Style="{StaticResource LinkButton}"
+                                    Foreground="{StaticResource MutedTextBrush}"
+                                    HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,8,0" Padding="4"
+                                    Visibility="Collapsed" Click="ClearMemberSearch_Click"/>
+                                </Grid>
                                 <!-- Danh sách kết quả gợi ý -->
                                 <Border BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="8" Background="White" Margin="0,0,0,8">
                                     <ListBox x:Name="MemberResultsList" MaxHeight="160" BorderThickness="0" Background="Transparent"
