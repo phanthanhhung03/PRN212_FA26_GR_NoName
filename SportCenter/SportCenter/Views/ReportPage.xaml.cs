@@ -11,7 +11,7 @@ using System.Windows.Media;
 
 namespace SportCenter.Views
 {
-    // UC15: báo cáo cho Manager (tổng quan, doanh thu, chuyên cần) theo tháng, xuất PDF từng tab.
+    // UC15: báo cáo cho Manager (tổng quan, doanh thu) theo tháng, xuất PDF từng tab.
     public partial class ReportPage : UserControl
     {
         private static readonly System.Globalization.CultureInfo Vi = new("vi-VN");
@@ -22,7 +22,7 @@ namespace SportCenter.Views
         private bool _exporting;
 
         private record Stat(string Value, string Label);
-        private record Snapshot(MonthOption Month, OverviewDto Overview, RevenueReportDto Revenue, AttendanceReportDto Attendance);
+        private record Snapshot(MonthOption Month, OverviewDto Overview, RevenueReportDto Revenue);
 
         public ReportPage()
         {
@@ -50,13 +50,11 @@ namespace SportCenter.Views
             {
                 var overview = await _service.GetOverviewAsync(month.Year, month.Month);
                 var revenue = await _service.GetRevenueAsync(month.Year, month.Month);
-                var attendance = await _service.GetAttendanceAsync(month.Year, month.Month);
                 if (version != _loadVersion) return;
 
                 ShowOverview(overview, month);
                 ShowRevenue(revenue);
-                ShowAttendance(attendance);
-                _snap = new Snapshot(month, overview, revenue, attendance);
+                _snap = new Snapshot(month, overview, revenue);
             }
             catch (Exception ex)
             {
@@ -113,24 +111,11 @@ namespace SportCenter.Views
             }
         }
 
-        private void ShowAttendance(AttendanceReportDto a)
-        {
-            AttendanceTotal.Text = a.Total.Counted == 0
-                ? "Toàn trung tâm: chưa có dữ liệu điểm danh của các buổi đã hoàn thành trong tháng này."
-                : $"Toàn trung tâm: {a.Total.RateText} chuyên cần ({a.Total.Counted} lượt điểm danh, {a.Total.Late} lượt muộn).";
-            AttSportGrid.ItemsSource = a.BySport;
-            AttCoachGrid.ItemsSource = a.ByCoach;
-            AtRiskTitle.Text = $"Học viên cần chú ý (chuyên cần dưới {a.AtRiskThreshold * 100:0}%)";
-            AtRiskGrid.ItemsSource = a.AtRisk;
-            AtRiskEmpty.Visibility = a.AtRisk.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
-        }
-
         // Cuộn chuột trên bảng thì chuyển cho ScrollViewer của tab (các bảng không tự cuộn).
         private void Grid_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
         {
             e.Handled = true;
-            var scroll = (Tabs.SelectedIndex == 1 ? RevenueScroll : AttendanceScroll);
-            scroll.ScrollToVerticalOffset(scroll.VerticalOffset - e.Delta / 3.0);
+            RevenueScroll.ScrollToVerticalOffset(RevenueScroll.VerticalOffset - e.Delta / 3.0);
         }
 
         // ---------- Xuất PDF ----------
@@ -143,13 +128,12 @@ namespace SportCenter.Views
         private async void Export_Click(object sender, RoutedEventArgs e)
         {
             if (_exporting || _snap is not { } snap) return;       // snap: một bộ dữ liệu cùng tháng, chụp trước khi mở hộp thoại
-            var (month, overview, revenue, attendance) = snap;
+            var (month, overview, revenue) = snap;
 
             (string key, string name) = Tabs.SelectedIndex switch
             {
                 0 => ("TongQuan", "tổng quan"),
-                1 => ("DoanhThu", "doanh thu"),
-                _ => ("ChuyenCan", "chuyên cần")
+                _ => ("DoanhThu", "doanh thu")
             };
             var dialog = new SaveFileDialog
             {
@@ -174,8 +158,7 @@ namespace SportCenter.Views
                 await Task.Run(() =>
                 {
                     if (tab == 0) ReportPdfExporter.ExportOverview(path, month, overview);
-                    else if (tab == 1) ReportPdfExporter.ExportRevenue(path, month, revenue);
-                    else ReportPdfExporter.ExportAttendance(path, month, attendance);
+                    else ReportPdfExporter.ExportRevenue(path, month, revenue);
                 });
                 Notice.Show("Đã xuất PDF.");
             }
