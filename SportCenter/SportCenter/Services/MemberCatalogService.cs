@@ -29,6 +29,12 @@ namespace SportCenter.Services
         public async Task<List<MemberClassDto>> GetOpenClassesAsync(int? sportId, int? courseId)
         {
             RequireMember();
+<<<<<<< Updated upstream
+=======
+            int currentMemberId = CurrentUser.Value?.UserId ?? 0;
+            var today = DateOnly.FromDateTime(DateTime.Today);
+            await PaymentService.ExpireStalePendingAsync();   // trả chỗ của các Pending quá hạn trước khi đếm
+>>>>>>> Stashed changes
             using var db = new SportCenterDbContext();
 
             var query = db.Classes.AsNoTracking().Where(c => c.Status == "Enrolling");
@@ -45,7 +51,14 @@ namespace SportCenter.Services
                     c.ClassMembers.Count(m => m.Status == "Active"),
                     c.Course.TuitionFee,
                     c.TimeSlots.OrderBy(t => t.DayOfWeek).ThenBy(t => t.StartTime)
+<<<<<<< Updated upstream
                         .Select(t => t.SlotName).ToList()))
+=======
+                        .Select(t => t.SlotName).ToList(),
+                    c.ClassMembers.Any(m => m.MemberId == currentMemberId && m.Status != "Dropped"),
+                    c.ClassMembers.Any(m => m.MemberId == currentMemberId && m.Status == "Active"),   // IsPaid
+                    c.StartDate <= today))                                                            // HasStarted
+>>>>>>> Stashed changes
                 .ToListAsync();
         }
         
