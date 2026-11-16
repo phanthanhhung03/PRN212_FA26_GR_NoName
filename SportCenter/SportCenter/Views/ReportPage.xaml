@@ -132,55 +132,6 @@
                     </StackPanel>
                 </ScrollViewer>
             </TabItem>
-
-            <!-- Chuyên cần -->
-            <TabItem Header="Chuyên cần" Style="{StaticResource ReportTabItem}">
-                <ScrollViewer x:Name="AttendanceScroll" VerticalScrollBarVisibility="Auto" Padding="0,8,16,16">
-                    <StackPanel>
-                        <TextBlock x:Name="AttendanceTotal" FontSize="14" Foreground="{StaticResource MutedTextBrush}" Margin="0,8,0,0"/>
-                        <TextBlock Text="Chuyên cần = (Có mặt + Muộn) / (Có mặt + Muộn + Vắng); vắng có phép không tính. Chỉ tính các buổi đã hoàn thành."
-                                   FontSize="12" Foreground="{StaticResource MutedTextBrush}" TextWrapping="Wrap" Margin="0,2,0,0"/>
-
-                        <TextBlock Text="Theo môn" Style="{StaticResource SectionTitle}"/>
-                        <DataGrid x:Name="AttSportGrid" Style="{StaticResource ReportGrid}" PreviewMouseWheel="Grid_PreviewMouseWheel">
-                            <DataGrid.Columns>
-                                <DataGridTextColumn Header="Môn" Binding="{Binding Display}" Width="*" MinWidth="160" ElementStyle="{StaticResource TrimCellText}"/>
-                                <DataGridTextColumn Header="Có mặt" Binding="{Binding Present}" Width="80" MinWidth="80" ElementStyle="{StaticResource CenterCellText}"/>
-                                <DataGridTextColumn Header="Muộn" Binding="{Binding Late}" Width="80" MinWidth="80" ElementStyle="{StaticResource CenterCellText}"/>
-                                <DataGridTextColumn Header="Vắng" Binding="{Binding Absent}" Width="80" MinWidth="80" ElementStyle="{StaticResource CenterCellText}"/>
-                                <DataGridTextColumn Header="Có phép" Binding="{Binding Excused}" Width="90" MinWidth="90" ElementStyle="{StaticResource CenterCellText}"/>
-                                <DataGridTextColumn Header="Chuyên cần" Binding="{Binding RateText}" Width="110" MinWidth="110" ElementStyle="{StaticResource CenterCellText}"/>
-                            </DataGrid.Columns>
-                        </DataGrid>
-
-                        <TextBlock Text="Theo coach" Style="{StaticResource SectionTitle}"/>
-                        <DataGrid x:Name="AttCoachGrid" Style="{StaticResource ReportGrid}" PreviewMouseWheel="Grid_PreviewMouseWheel">
-                            <DataGrid.Columns>
-                                <DataGridTextColumn Header="Coach" Binding="{Binding Display}" Width="*" MinWidth="160" ElementStyle="{StaticResource TrimCellText}"/>
-                                <DataGridTextColumn Header="Có mặt" Binding="{Binding Present}" Width="80" MinWidth="80" ElementStyle="{StaticResource CenterCellText}"/>
-                                <DataGridTextColumn Header="Muộn" Binding="{Binding Late}" Width="80" MinWidth="80" ElementStyle="{StaticResource CenterCellText}"/>
-                                <DataGridTextColumn Header="Vắng" Binding="{Binding Absent}" Width="80" MinWidth="80" ElementStyle="{StaticResource CenterCellText}"/>
-                                <DataGridTextColumn Header="Có phép" Binding="{Binding Excused}" Width="90" MinWidth="90" ElementStyle="{StaticResource CenterCellText}"/>
-                                <DataGridTextColumn Header="Chuyên cần" Binding="{Binding RateText}" Width="110" MinWidth="110" ElementStyle="{StaticResource CenterCellText}"/>
-                            </DataGrid.Columns>
-                        </DataGrid>
-
-                        <TextBlock x:Name="AtRiskTitle" Style="{StaticResource SectionTitle}"/>
-                        <DataGrid x:Name="AtRiskGrid" Style="{StaticResource ReportGrid}" PreviewMouseWheel="Grid_PreviewMouseWheel">
-                            <DataGrid.Columns>
-                                <DataGridTextColumn Header="Học viên" Binding="{Binding Name}" Width="*" MinWidth="140" ElementStyle="{StaticResource TrimCellText}"/>
-                                <DataGridTextColumn Header="Lớp" Binding="{Binding Detail}" Width="*" MinWidth="140" ElementStyle="{StaticResource TrimCellText}"/>
-                                <DataGridTextColumn Header="Có mặt" Binding="{Binding Present}" Width="80" MinWidth="80" ElementStyle="{StaticResource CenterCellText}"/>
-                                <DataGridTextColumn Header="Muộn" Binding="{Binding Late}" Width="80" MinWidth="80" ElementStyle="{StaticResource CenterCellText}"/>
-                                <DataGridTextColumn Header="Vắng" Binding="{Binding Absent}" Width="80" MinWidth="80" ElementStyle="{StaticResource CenterCellText}"/>
-                                <DataGridTextColumn Header="Chuyên cần" Binding="{Binding RateText}" Width="110" MinWidth="110" ElementStyle="{StaticResource CenterCellText}"/>
-                            </DataGrid.Columns>
-                        </DataGrid>
-                        <TextBlock x:Name="AtRiskEmpty" Text="Không có học viên nào dưới ngưỡng." Foreground="{StaticResource MutedTextBrush}"
-                                   Margin="4,8,0,0" Visibility="Collapsed"/>
-                    </StackPanel>
-                </ScrollViewer>
-            </TabItem>
         </TabControl>
     </Grid>
 </UserControl>

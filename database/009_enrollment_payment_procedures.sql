@@ -52,7 +52,7 @@ BEGIN
         FROM dbo.[class] WITH (UPDLOCK, HOLDLOCK)
         WHERE class_id = @class_id;
 
-        IF @max_capacity IS NULL OR @class_status <> 'Enrolling'
+        IF @max_capacity IS NULL OR @class_status NOT IN ('Enrolling', 'Ongoing')
             THROW 51004, N'Lớp không tồn tại hoặc không còn tuyển sinh.', 1;
 
         DECLARE @existing_enrollment_id INT, @existing_status VARCHAR(20);

@@ -35,8 +35,7 @@ namespace SportCenter.Services
             int currentMemberId = CurrentUser.Value?.UserId ?? 0;
             await PaymentService.ExpireStalePendingAsync();   // trả chỗ của các Pending quá hạn trước khi đếm
             using var db = new SportCenterDbContext();
-            var today = DateOnly.FromDateTime(DateTime.Today);
-            var query = db.Classes.AsNoTracking().Where(c => c.Status == "Enrolling");
+            var query = db.Classes.AsNoTracking().Where(c => c.Status == "Enrolling" || c.Status == "Ongoing");
             if (sportId is not null) query = query.Where(c => c.Course.SportId == sportId);
             if (courseId is not null) query = query.Where(c => c.CourseId == courseId);
 
@@ -52,7 +51,7 @@ namespace SportCenter.Services
                     c.TimeSlots.OrderBy(t => t.DayOfWeek).ThenBy(t => t.StartTime)
                         .Select(t => t.SlotName).ToList(),
                     c.ClassMembers.Any(m => m.MemberId == currentMemberId && m.Status != "Dropped"),
-                    c.StartDate <= today))                                                            // HasStarted
+                    false))   // HasStarted: lớp đã khai giảng vẫn cho đăng ký
                 .ToListAsync();
         }
         
