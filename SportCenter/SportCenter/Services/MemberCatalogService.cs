@@ -36,7 +36,7 @@ namespace SportCenter.Services
             await PaymentService.ExpireStalePendingAsync();   // trả chỗ của các Pending quá hạn trước khi đếm
             using var db = new SportCenterDbContext();
 
-            var query = db.Classes.AsNoTracking().Where(c => c.Status == "Enrolling");
+            var query = db.Classes.AsNoTracking().Where(c => c.Status == "Enrolling" || c.Status == "Ongoing");
             if (sportId is not null) query = query.Where(c => c.Course.SportId == sportId);
             if (courseId is not null) query = query.Where(c => c.CourseId == courseId);
 

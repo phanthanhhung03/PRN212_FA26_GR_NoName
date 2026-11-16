@@ -124,7 +124,7 @@ namespace SportCenter.Services
             using var db = new SportCenterDbContext();
 
             return await db.Classes.AsNoTracking()
-                .Where(c => c.Status == "Enrolling")    // sp_enroll_member chỉ nhận lớp Enrolling
+                .Where(c => c.Status == "Enrolling" || c.Status == "Ongoing")    // sp_enroll_member nhận lớp Enrolling và Ongoing
                 .OrderBy(c => c.Course.Sport.SportName)
                 .ThenBy(c => c.ClassName)
                 .Select(c => new ClassEnrollOptionDto(
